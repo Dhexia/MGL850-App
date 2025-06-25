@@ -82,56 +82,44 @@ Il faut savoir que par exemple, dans certains contrats notamment celui pour les 
 
 # BoatChain — État actuel du back‑end (25 juin 2025)
 
-##  Fonctionnalités déjà opérationnelles
+## Fonctionnalités déjà opérationnelles
 
-| Domaine              | Module / Contrat                             | Description                                                                         |
-| -------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **Blockchain**       | `BoatPassport`, `RoleRegistry`, `BoatEvents` | Contrats déployés sur Sépolia via Ignition (reproductible).                         |
-| **Web3 adapter**     | `ChainModule`                                | Lecture **et** écriture on‑chain (provider + signer)                                |
-| **Gestion bateaux**  | `BoatsModule`                                | Endpoints mint / add‑event + contrôle de rôles on‑chain                             |
-| **Authentification** | `AuthModule`                                 | Login par signature (nonce → JWT) + `JwtAuthGuard` global (protège tous les `POST`) |
-| **Documents**        | `DocumentsModule`                            | Upload fichier → Pinata → renvoie `ipfs://CID`                                      |
+| Domaine              | Module / Contrat                             | Description                                                                        |
+| -------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Blockchain**       | `BoatPassport`, `RoleRegistry`, `BoatEvents` | Contrats déployés sur Sépolia via Ignition (reproductible).                        |
+| **Web3 adapter**     | `ChainModule`                                | Lecture et écriture on‑chain (provider + signer).                                  |
+| **Gestion bateaux**  | `BoatsModule`                                | Endpoints `mint` et `add‑event` ; contrôle des rôles on‑chain.                     |
+| **Authentification** | `AuthModule`                                 | Login par signature (nonce → JWT) ; `JwtAuthGuard` global protège tous les `POST`. |
+| **Documents**        | `DocumentsModule`                            | Upload fichier → Pinata → renvoie `ipfs://CID`.                                    |
+| **Indexer**          | `IndexerModule` + Supabase                   | WebSocket Sépolia → table `events` ; lecture SQL prioritaire, fallback on‑chain.   |
 
 ---
 
-##  Routes testées et attendus (Postman)
+## Routes vérifiées (Postman)
 
-| Méthode & URL                        | Corps attendu                                 | En‑têtes                      | Réponse attendue                                      |
-| ------------------------------------ | --------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
-| **GET** `/auth/nonce?address=0xABC…` | –                                             | –                             | `{ "nonce": "random‑hex" }` (200)                     |
-| **POST** `/auth/login`               | `{ "address": "0xABC…", "signature": "0x…" }` | –                             | `{ "token": "<JWT>" }` (201)                          |
-| **POST** `/boats`                    | `{ "to": "0xDEF…", "uri": "ipfs://json" }`    | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
-| **POST** `/boats/1/events`           | `{ "kind": 1, "ipfsHash": "ipfs://CID" }`     | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
-| **POST** `/documents/boats/1/events` | *multipart* : champ `file`, champ `kind`      | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…", "ipfsHash": "ipfs://CID" }` (201) |
-| **GET** `/boats/1/events`            | –                                             | –                             | `[]` ou tableau d’événements (200)                    |
+| Méthode / URL                        | Corps (Body)                               | Headers                       | Réponse attendue                                      |
+| ------------------------------------ | ------------------------------------------ | ----------------------------- | ----------------------------------------------------- |
+| **GET**  `/auth/nonce?address=0x…`   | –                                          | –                             | `{ "nonce": "<hex>" }` (200)                          |
+| **POST** `/auth/login`               | `{ "address": "0x…", "signature": "0x…" }` | –                             | `{ "token": "<JWT>" }` (201)                          |
+| **POST** `/boats`                    | `{ "to": "0x…", "uri": "ipfs://…" }`       | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
+| **POST** `/boats/1/events`           | `{ "kind": 1, "ipfsHash": "ipfs://CID" }`  | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
+| **POST** `/documents/boats/1/events` | *multipart* : champ `file`, champ `kind`   | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…", "ipfsHash": "ipfs://CID" }` (201) |
+| **GET**  `/boats/1/events`           | –                                          | –                             | Tableau d’événements (lecture Supabase, 200)          |
 
-> **Astuce Postman**
+> **Procédure Postman**
 >
-> 1. Appeler `/auth/nonce`, signer dans MetaMask, puis `/auth/login`.
-> 2. Dans l’onglet *Authorization* des requêtes POST, choisir `Bearer Token` et coller le JWT renvoyé.
-> 3. Attendre la confirmation de transaction (\~15 s sur Sépolia), puis relire `/boats/:id/events`.
+> 1. `GET /auth/nonce`, signer le nonce dans MetaMask, puis `POST /auth/login`.
+> 2. Dans chaque requête `POST`, onglet *Authorization* → type **Bearer Token** → coller le JWT.
+> 3. Après un `POST`, attendre \~15 s (Sépolia) puis interroger `GET /boats/:id/events` : l’événement apparaît.
 
 ---
 
-## Prochaine brique : **Indexer + Base SQL**
-
-| Étape | Objectif                                                                           | Tech suggérée                            |
-| ----- | ---------------------------------------------------------------------------------- | ---------------------------------------- |
-| 1     | Créer table `events` (`boat_id`, `kind`, `timestamp`, `author`, `ipfs_hash`)       | **Supabase Postgres** (gratuit, hébergé) |
-| 2     | Écouter `BoatEventLogged` via WebSocket (ethers)                                   | Worker Nest ou script Node standalone    |
-| 3     | Insérer chaque log dans la table, stocker `last_block`                             | transaction PG ou upsert                 |
-| 4     | Modifier `BoatsService.listEvents` : tenter SQL d’abord, fallback on‑chain si vide | TypeORM ou direct `pg`                   |
-
-Avantage : lecture instantanée, filtres, agrégations (timeline paginée, recherches avancées) – tout en gardant la blockchain comme vérité source.
-
----
-
-## Variables d’environnement utilisées
+## Variables d’environnement
 
 ```env
-# Sépolia
-SEPOLIA_RPC_URL=https://…
-PRIVATE_KEY=0x…
+# RPC Sépolia
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/<API_KEY>
+PRIVATE_KEY=0x<clé_privée_wallet>
 
 # Adresses contrats
 BOAT_PASSPORT_ADDRESS=0x…
@@ -139,13 +127,22 @@ BOAT_EVENTS_ADDRESS=0x…
 ROLE_REGISTRY_ADDRESS=0x…
 
 # Auth
-JWT_SECRET=4f1c1b6d…
+JWT_SECRET=<chaîne_random_32_bytes>
 
 # Pinata
-PINATA_JWT=ey
-PINATA_GATEWAY= (optionnel)
+PINATA_JWT=<scoped_jwt>
+
+# Supabase (indexer)
+SUPABASE_URL=https://<proj>.supabase.co
+SUPABASE_SERVICE_KEY=<service_role_key>
+WEBSOCKET_RPC=wss://eth-sepolia.g.alchemy.com/v2/<API_KEY_WS>
 ```
 
 ---
 
-> **Prochaine tâche** : implémenter l’indexer et brancher Supabase ; on gardera la focus “back‑end” avant de passer au front.
+## Prochaine étape : **Tests Postman automatisés**
+
+1. Créer une collection Postman « BoatChain ».
+2. Ajouter chaque requête ci‑dessus avec tests de statut HTTP et présence de `txHash` / `ipfsHash`.
+3. Récupérer le JWT comme variable d’environnement Postman après `auth/login`.
+4. Exécuter la collection en CI ( Newman ) pour valider chaque déploiement.

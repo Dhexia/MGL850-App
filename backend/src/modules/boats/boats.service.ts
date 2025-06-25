@@ -1,77 +1,80 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { ChainService } from '../../modules/chain/chain.service';
+import { ConfigService } from '@nestjs/config';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ChainService } from '../chain/chain.service';
 import type { BoatEvents } from '../../abi/typechain-types/contracts/BoatEvents';
 
 type EventData = BoatEvents.EventDataStructOutput;
 
-/**
- * Service domaine Bateaux.
- * – lecture de l'historique on‑chain ou via l'indexer (future étape)
- * – création de passeport NFT
- * – ajout d'événements avec contrôle de rôles
- */
 @Injectable()
 export class BoatsService {
-  constructor(private readonly chain: ChainService) {}
+  private readonly supa: SupabaseClient;
 
-  /* -------------------- Lecture -------------------- */
+  constructor(
+    private readonly cfg: ConfigService,
+    private readonly chain: ChainService,
+  ) {
+    this.supa = createClient(
+      this.cfg.get<string>('SUPABASE_URL')!,
+      this.cfg.get<string>('SUPABASE_SERVICE_KEY')!,
+    );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Lecture : priorité à Supabase, fallback on‑chain                    */
+  /* ------------------------------------------------------------------ */
   async listEvents(boatId: number): Promise<EventData[]> {
+    const cached = await this.listEventsDb(boatId);
+    if (cached.length) return cached as unknown as EventData[];
     return this.chain.getHistory(boatId);
   }
 
-  /* -------------------- Écriture : passeport -------------------- */
-  async mintPassport(to: string, uri: string) {
-    return this.chain.mintPassport(to, uri); // délègue au ChainService
+  private async listEventsDb(boatId: number) {
+    const { data } = await this.supa
+      .from('events')
+      .select('*')
+      .eq('boat_id', boatId)
+      .order('ts', { ascending: false });
+    return data ?? [];
   }
 
-  /* -------------------- Écriture : événement -------------------- */
-  /**
-   * Ajoute un événement après avoir vérifié que l'appelant possède le rôle requis.
-   * kind:
-   *   0 = Sale (uniquement propriétaire)
-   *   1 = Repair (professionnel certifié)
-   *   2 = Incident (propriétaire OU assureur)
-   *   3 = Inspection (professionnel certifié)
-   */
+  /* ------------------------------------------------------------------ */
+  /* Création de passeport (NFT)                                         */
+  /* ------------------------------------------------------------------ */
+  async mintPassport(to: string, uri: string) {
+    return this.chain.mintPassport(to, uri);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Ajout d'événement : contrôle des rôles                              */
+  /* kind : 0 = Sale, 1 = Repair, 2 = Incident, 3 = Inspection          */
+  /* ------------------------------------------------------------------ */
   async addEvent(
     boatId: number,
     kind: number,
     ipfsHash: string,
     caller: string,
   ) {
-    // vérifie que le bateau existe
     if (!(await this.chain.boatExists(boatId))) {
-      throw new ForbiddenException('Bateau inexistant');
+      throw new ForbiddenException('Boat does not exist');
     }
 
-    // rôles selon la catégorie
-    switch (kind) {
-      case 0: // Sale
-        if (!(await this.chain.isOwner(boatId, caller))) {
-          throw new ForbiddenException(
-            'Seul le propriétaire peut enregistrer une vente',
-          );
-        }
-        break;
-      case 1: // Repair
-      case 3: // Inspection
-        if (!(await this.chain.isCertifiedProfessional(caller))) {
-          throw new ForbiddenException('Professionnel certifié requis');
-        }
-        break;
-      case 2: // Incident
-        if (
-          !(await this.chain.isOwner(boatId, caller)) &&
-          !(await this.chain.isInsurer(caller))
-        ) {
-          throw new ForbiddenException('Propriétaire ou assureur requis');
-        }
-        break;
-      default:
-        throw new ForbiddenException("Type d'événement inconnu");
+    if ([1, 3].includes(kind)) {
+      if (!(await this.chain.isCertifiedProfessional(caller))) {
+        throw new ForbiddenException('Not a certified professional');
+      }
+    } else if (kind === 2) {
+      const isOwner = await this.chain.isOwner(boatId, caller);
+      const isInsurer = await this.chain.isInsurer(caller);
+      if (!isOwner && !isInsurer) {
+        throw new ForbiddenException('Not owner nor insurer');
+      }
+    } else if (kind === 0) {
+      if (!(await this.chain.isOwner(boatId, caller))) {
+        throw new ForbiddenException('Not owner');
+      }
     }
 
-    // si tout est bon, envoie la transaction
     return this.chain.addEventTx(boatId, kind, ipfsHash);
   }
 }
