@@ -79,3 +79,73 @@ Il faut savoir que par exemple, dans certains contrats notamment celui pour les 
 13.1 Alchemy Webhooks pour erreurs tx  
 13.2 Prometheus ou Grafana Loki pour latence API et taille events  
 
+
+# BoatChain — État actuel du back‑end (25 juin 2025)
+
+##  Fonctionnalités déjà opérationnelles
+
+| Domaine              | Module / Contrat                             | Description                                                                         |
+| -------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Blockchain**       | `BoatPassport`, `RoleRegistry`, `BoatEvents` | Contrats déployés sur Sépolia via Ignition (reproductible).                         |
+| **Web3 adapter**     | `ChainModule`                                | Lecture **et** écriture on‑chain (provider + signer)                                |
+| **Gestion bateaux**  | `BoatsModule`                                | Endpoints mint / add‑event + contrôle de rôles on‑chain                             |
+| **Authentification** | `AuthModule`                                 | Login par signature (nonce → JWT) + `JwtAuthGuard` global (protège tous les `POST`) |
+| **Documents**        | `DocumentsModule`                            | Upload fichier → Pinata → renvoie `ipfs://CID`                                      |
+
+---
+
+##  Routes testées et attendus (Postman)
+
+| Méthode & URL                        | Corps attendu                                 | En‑têtes                      | Réponse attendue                                      |
+| ------------------------------------ | --------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
+| **GET** `/auth/nonce?address=0xABC…` | –                                             | –                             | `{ "nonce": "random‑hex" }` (200)                     |
+| **POST** `/auth/login`               | `{ "address": "0xABC…", "signature": "0x…" }` | –                             | `{ "token": "<JWT>" }` (201)                          |
+| **POST** `/boats`                    | `{ "to": "0xDEF…", "uri": "ipfs://json" }`    | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
+| **POST** `/boats/1/events`           | `{ "kind": 1, "ipfsHash": "ipfs://CID" }`     | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
+| **POST** `/documents/boats/1/events` | *multipart* : champ `file`, champ `kind`      | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…", "ipfsHash": "ipfs://CID" }` (201) |
+| **GET** `/boats/1/events`            | –                                             | –                             | `[]` ou tableau d’événements (200)                    |
+
+> **Astuce Postman**
+>
+> 1. Appeler `/auth/nonce`, signer dans MetaMask, puis `/auth/login`.
+> 2. Dans l’onglet *Authorization* des requêtes POST, choisir `Bearer Token` et coller le JWT renvoyé.
+> 3. Attendre la confirmation de transaction (\~15 s sur Sépolia), puis relire `/boats/:id/events`.
+
+---
+
+## Prochaine brique : **Indexer + Base SQL**
+
+| Étape | Objectif                                                                           | Tech suggérée                            |
+| ----- | ---------------------------------------------------------------------------------- | ---------------------------------------- |
+| 1     | Créer table `events` (`boat_id`, `kind`, `timestamp`, `author`, `ipfs_hash`)       | **Supabase Postgres** (gratuit, hébergé) |
+| 2     | Écouter `BoatEventLogged` via WebSocket (ethers)                                   | Worker Nest ou script Node standalone    |
+| 3     | Insérer chaque log dans la table, stocker `last_block`                             | transaction PG ou upsert                 |
+| 4     | Modifier `BoatsService.listEvents` : tenter SQL d’abord, fallback on‑chain si vide | TypeORM ou direct `pg`                   |
+
+Avantage : lecture instantanée, filtres, agrégations (timeline paginée, recherches avancées) – tout en gardant la blockchain comme vérité source.
+
+---
+
+## Variables d’environnement utilisées
+
+```env
+# Sépolia
+SEPOLIA_RPC_URL=https://…
+PRIVATE_KEY=0x…
+
+# Adresses contrats
+BOAT_PASSPORT_ADDRESS=0x…
+BOAT_EVENTS_ADDRESS=0x…
+ROLE_REGISTRY_ADDRESS=0x…
+
+# Auth
+JWT_SECRET=4f1c1b6d…
+
+# Pinata
+PINATA_JWT=ey
+PINATA_GATEWAY= (optionnel)
+```
+
+---
+
+> **Prochaine tâche** : implémenter l’indexer et brancher Supabase ; on gardera la focus “back‑end” avant de passer au front.
