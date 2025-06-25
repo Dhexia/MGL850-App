@@ -20,66 +20,6 @@ Je vous donne aussi les étapes que j'ai suivi pour mettre en place le projet.
 Il faut savoir que par exemple, dans certains contrats notamment celui pour les events et les rôles, j'ai pas pris en compte TOUS les rôles et TOUS les events. On pourra les améliorer par la suite.
 
 
-# Roadmap du projet BoatChain
-
-## 1 – Définir les contrats
-1.1 Écrire BoatPassport, RoleRegistry, BoatEvents  
-1.2 Compiler et tester localement avec Hardhat  
-1.3 Corriger supportsInterface et déployer sur Sepolia avec Ignition  
-
-## 2 – Initialiser le dépôt backend NestJS
-2.1 npx nest new boatchain-backend  
-2.2 Créer ChainModule pour la connexion Web3  
-2.3 Injecter RPC_URL et les adresses des contrats via .env  
-
-## 3 – Lire la chaîne
-3.1 Ajouter getHistory, boatExists dans ChainService  
-3.2 BoatsModule : GET /boats/:id/events retourne un tableau  
-
-## 4 – Frapper un premier passeport (Pour tester la route GET /boats/:id/events)
-4.1 Hardhat console → passport.mint(owner, "ipfs://example")  
-4.2 Vérifier ownerOf(1) et la route GET qui renvoie []  
-
-## 5 – Écriture on-chain
-5.1 Ajouter signer, mintPassport, addEventTx dans ChainService  
-5.2 Exposer POST /boats et POST /boats/:id/events  
-5.3 Vérifier en Postman que les transactions partent  
-
-## 6 – Authentification wallet
-6.1 AuthModule : GET /auth/nonce, POST /auth/login -> JWT  
-6.2 JwtAuthGuard global : protège uniquement les POST  
-
-## 7 – Contrôles métier
-7.1 BoatsService.addEvent vérifie owner, assureur, professionnel  
-7.2 Rejette 403 si rôle manquant  
-
-## 8 – Upload IPFS
-8.1 DocumentModule reçoit un fichier, pousse sur IPFS, récupère le CID  
-8.2 Appelle addEvent avec le hash IPFS  
-
-## 9 – Indexer PostgreSQL (option performance)
-9.1 Worker WebSocket écoute BoatEventLogged  
-9.2 INSERT boat_id, kind, timestamp, ipfs_hash dans la table events  
-9.3 BoatsService lit la base avant la chaîne
-
-## 10 – Frontend minimal
-10.1 React + wagmi Connect Wallet  
-10.2 Page bateau : GET events, formulaire upload → POST events  
-
-## 11 – Tests end-to-end
-11.1 Jest Supertest côté backend (mock ChainService)  
-11.2 Playwright côté frontend  
-
-## 12 – CI / CD
-12.1 Workflow backend : lint, tests, Docker push, deploy staging  
-12.2 Workflow contrats : compile, Ignition deploy, publier ABI  
-12.3 Workflow frontend : lint, tests, build, CDN deploy  
-
-## 13 – Monitoring
-13.1 Alchemy Webhooks pour erreurs tx  
-13.2 Prometheus ou Grafana Loki pour latence API et taille events  
-
-
 # BoatChain — État actuel du back‑end (25 juin 2025)
 
 ## Fonctionnalités déjà opérationnelles
@@ -146,3 +86,63 @@ WEBSOCKET_RPC=wss://eth-sepolia.g.alchemy.com/v2/<API_KEY_WS>
 2. Ajouter chaque requête ci‑dessus avec tests de statut HTTP et présence de `txHash` / `ipfsHash`.
 3. Récupérer le JWT comme variable d’environnement Postman après `auth/login`.
 4. Exécuter la collection en CI ( Newman ) pour valider chaque déploiement.
+
+
+# Roadmap du projet BoatChain
+
+## 1 – Définir les contrats ✅
+1.1 Écrire BoatPassport, RoleRegistry, BoatEvents  
+1.2 Compiler et tester localement avec Hardhat  
+1.3 Corriger supportsInterface et déployer sur Sepolia avec Ignition  
+
+## 2 – Initialiser le dépôt backend NestJS ✅
+2.1 npx nest new boatchain-backend  
+2.2 Créer ChainModule pour la connexion Web3  
+2.3 Injecter RPC_URL et les adresses des contrats via .env  
+
+## 3 – Lire la chaîne ✅
+3.1 Ajouter getHistory, boatExists dans ChainService  
+3.2 BoatsModule : GET /boats/:id/events retourne un tableau  
+
+## 4 – Frapper un premier passeport (Pour tester la route GET /boats/:id/events) ✅
+4.1 Hardhat console → passport.mint(owner, "ipfs://example")  
+4.2 Vérifier ownerOf(1) et la route GET qui renvoie []  
+
+## 5 – Écriture on-chain ✅
+5.1 Ajouter signer, mintPassport, addEventTx dans ChainService  
+5.2 Exposer POST /boats et POST /boats/:id/events  
+5.3 Vérifier en Postman que les transactions partent  
+
+## 6 – Authentification wallet ✅
+6.1 AuthModule : GET /auth/nonce, POST /auth/login -> JWT  
+6.2 JwtAuthGuard global : protège uniquement les POST  
+
+## 7 – Contrôles métier ✅
+7.1 BoatsService.addEvent vérifie owner, assureur, professionnel  
+7.2 Rejette 403 si rôle manquant  
+
+## 8 – Upload IPFS ✅
+8.1 DocumentModule reçoit un fichier, pousse sur IPFS, récupère le CID  
+8.2 Appelle addEvent avec le hash IPFS  
+
+## 9 – Indexer PostgreSQL (option performance) ✅
+9.1 Worker WebSocket écoute BoatEventLogged  
+9.2 INSERT boat_id, kind, timestamp, ipfs_hash dans la table events  
+9.3 BoatsService lit la base avant la chaîne
+
+## 10 – Frontend minimal
+10.1 React + wagmi Connect Wallet  
+10.2 Page bateau : GET events, formulaire upload → POST events  
+
+## 11 – Tests end-to-end
+11.1 Jest Supertest côté backend (mock ChainService)  
+11.2 Playwright côté frontend  
+
+## 12 – CI / CD
+12.1 Workflow backend : lint, tests, Docker push, deploy staging  
+12.2 Workflow contrats : compile, Ignition deploy, publier ABI  
+12.3 Workflow frontend : lint, tests, build, CDN deploy  
+
+## 13 – Monitoring (optionnel)
+13.1 Alchemy Webhooks pour erreurs tx  
+13.2 Prometheus ou Grafana Loki pour latence API et taille events  
