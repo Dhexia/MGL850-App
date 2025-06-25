@@ -1,0 +1,7 @@
+# Fichier OS Mac
+.DS_Store
+
+# Fichiers de configuration de l'IDE
+.vscode/
+.idea/
+
