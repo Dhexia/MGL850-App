@@ -10,7 +10,7 @@ import {
   BoatEvents,
   BoatPassport,
   RoleRegistry,
-} from '../abi/typechain-types';
+} from '../../abi/typechain-types';
 
 @Injectable()
 export class ChainService {
@@ -74,14 +74,28 @@ export class ChainService {
     }
   }
 
+  /** Adresse propriétaire actuelle d’un bateau */
+  async getOwner(boatId: number) {
+    return this.boatPassport.ownerOf(boatId);
+  }
+
+  /** Vrai si caller est propriétaire du bateau */
+  async isOwner(boatId: number, caller: string) {
+    return (await this.getOwner(boatId)).toLowerCase() === caller.toLowerCase();
+  }
+
+  /** Vrai si caller possède le rôle assureur */
+  async isInsurer(caller: string) {
+    const role = await this.roleRegistry.INSURER_ROLE();
+    return this.roleRegistry.hasRole(role, caller);
+  }
+
   /* === ÉCRITURE ========================================================== */
 
   /** Frappe un passeport et renvoie le reçu miné */
   async mintPassport(to: string, uri: string) {
-    const tx = await this.boatPassport
-      .connect(this.signer) // on écrit avec la clé privée
-      .mint(to, uri);
-    return tx.wait(); // reçu => status, gasUsed, blockNumber…
+    const tx = await this.boatPassport.connect(this.signer).mint(to, uri);
+    return { txHash: tx.hash };
   }
 
   /** Ajoute un événement on-chain et retourne le reçu miné */

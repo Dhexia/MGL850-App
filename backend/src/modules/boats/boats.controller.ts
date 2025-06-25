@@ -4,32 +4,36 @@ import {
   Post,
   Param,
   Body,
+  Req,
   ParseIntPipe,
 } from '@nestjs/common';
 import { BoatsService } from './boats.service';
+import type { Request } from 'express';
 
 @Controller('boats')
 export class BoatsController {
   constructor(private readonly boats: BoatsService) {}
 
-  /* Lecture – déjà fonctionnel */
+  /* ----------- lecture ----------- */
   @Get(':id/events')
   async getEvents(@Param('id', ParseIntPipe) id: number) {
     return this.boats.listEvents(id);
   }
 
-  /* Frappe un nouveau passeport */
+  /* ----------- création passeport ----------- */
   @Post()
-  async createBoat(@Body() dto: { to: string; uri: string }) {
-    return this.boats.mintPassport(dto.to, dto.uri);
+  async createBoat(@Body() body: { to: string; uri: string }) {
+    return this.boats.mintPassport(body.to, body.uri);
   }
 
-  /* Ajoute un événement */
+  /* ----------- ajout événement ----------- */
   @Post(':id/events')
   async addEvent(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: { kind: number; ipfsHash: string },
+    @Req() req: Request & { user?: { address: string } },
   ) {
-    return this.boats.addEvent(id, dto.kind, dto.ipfsHash);
+    const caller = req.user?.address;
+    return this.boats.addEvent(id, dto.kind, dto.ipfsHash, caller!);
   }
 }
