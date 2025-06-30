@@ -32,7 +32,7 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
     const [dimensions, setDimensions] = useState({height: 20, width: 100}); // Initial dimensions doesn't matter
 
     const buttonWidth = dimensions.width / state.routes.length;
-    const circleSize = dimensions.height - 60;
+    const circleSize = Platform.OS === 'web' ? (dimensions.height - 60) * 3 : dimensions.height - 60;
 
     const onTabBarLayout = (event: LayoutChangeEvent) => {
         setDimensions({
@@ -63,7 +63,6 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
                 marginBottom: Platform.OS === 'web' ? undefined : 30,
                 height: circleSize,
                 width: circleSize,
-                // width: dimensions.width/state.routes.length - 25,
             }]}/>
             {state.routes.map((route, index) => {
                 const {options} = descriptors[route.key];
@@ -116,7 +115,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: Platform.OS === 'web' ? undefined : 0,
         paddingBottom: Platform.OS === 'web' ? undefined : 50,
-        top: Platform.OS === 'web' ? 50 : undefined,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -126,7 +124,13 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         alignSelf: 'center',
         borderStyle: 'solid',
-        borderTopColor: '#E5E7EB',
+        borderColor: '#E5E7EB',
+
+        // Only for phone and tablet
         borderTopWidth: 1,
+
+        // Only for web
+        borderBottomWidth: 1,
+
     },
 })
