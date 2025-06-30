@@ -10,7 +10,7 @@ import {Text, PlatformPressable} from '@react-navigation/elements';
 import {BottomTabBarProps} from "@react-navigation/bottom-tabs";
 import {Feather, Entypo, Ionicons} from "@expo/vector-icons";
 import {TabBarButton} from "@/components/TabBarButton";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -39,6 +39,7 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
             height: event.nativeEvent.layout.height,
             width: event.nativeEvent.layout.width,
         });
+        tabPositionX.value = withSpring(buttonWidth * state.index + (buttonWidth / 2) - (circleSize) / 2, {duration: 1000});
     }
 
     const tabPositionX = useSharedValue(0);
@@ -48,6 +49,10 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
             transform: [{translateX: tabPositionX.value}]
         }
     });
+
+    useEffect(() => {
+        tabPositionX.value = withSpring(buttonWidth * state.index + (buttonWidth / 2) - (circleSize) / 2, {duration: 1000});
+    }, [state.index]);
 
     return (
         <View onLayout={onTabBarLayout} style={styles.tabBar}>
@@ -72,7 +77,6 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
                 const isFocused = state.index === index;
 
                 const onPress = () => {
-                    tabPositionX.value = withSpring(buttonWidth * index + (buttonWidth / 2) - (circleSize) / 2, {duration: 1000});
 
                     const event = navigation.emit({
                         type: 'tabPress',
