@@ -25,9 +25,9 @@ const TabsNavigator = () => {
     const currentTabName = currentTabRoute?.routeNames?.[currentTabIndex] ?? 'index';
 
     const titleMap = {
-        index: 'Home',
-        shop: 'Shop',
-        chat: 'Chat',
+        index: 'Accueil',
+        shop: 'Bateaux',
+        chat: 'Echanges',
     };
 
     const currentTitle = titleMap[currentTabName] || 'BoatChain';
