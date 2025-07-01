@@ -12,15 +12,29 @@ import ShopPage from "@/app/(tabs)/shop";
 import ChatPage from "@/app/(tabs)/chat";
 import PageLayout from '@/components/PageLayout';
 import {SafeAreaView} from "react-native-safe-area-context";
+import {useNavigationState} from '@react-navigation/native';
 
 const Tabs = createMaterialTopTabNavigator();
 const Drawer = createDrawerNavigator();
 
 const TabsNavigator = () => {
+    const state = useNavigationState((state) => state);
+    const currentTabRoute = state?.routes.find(r => r.name === 'Tabs')?.state;
+
+    const currentTabIndex = currentTabRoute?.index ?? 0;
+    const currentTabName = currentTabRoute?.routeNames?.[currentTabIndex] ?? 'index';
+
+    const titleMap = {
+        index: 'Home',
+        shop: 'Shop',
+        chat: 'Chat',
+    };
+
+    const currentTitle = titleMap[currentTabName] || 'BoatChain';
     return (
         <SafeAreaView style={{flex: 1}}>
             {/* En tête */}
-            <PageLayout title="Mon Application"/>
+            <PageLayout title={currentTitle}/>
 
             {/* Tabs déplacés en-dessous avec un padding */}
             <View style={{flex: 1}}>
@@ -49,9 +63,28 @@ export default function LayoutWithLeftDrawer() {
                 headerShown: false,
                 drawerStyle: {width: '66%'},
             }}
-            drawerContent={() => <Text>Left Drawer</Text>}
-        >
+            drawerContent={() => (
+                <View style={styles.drawer}>
+                    <View>
+                        <Text style={styles.drawerTitle}>Notifications</Text>
+                    </View>
+
+                </View>
+            )}>
             <Drawer.Screen name="Tabs" component={TabsNavigator}/>
         </Drawer.Navigator>
     );
 }
+
+
+const styles = StyleSheet.create({
+    drawer: {
+        flex: 1,
+        paddingVertical: "20%",
+        paddingHorizontal: 20,
+    },
+    drawerTitle: {
+        fontSize: 20,
+        fontWeight: 700,
+    }
+})

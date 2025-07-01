@@ -26,15 +26,18 @@ const PageLayout = ({title, children}: PageLayoutProps) => {
     return (
         <View style={styles.container}>
             <View style={styles.top}>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.openDrawer()}>
+                <TouchableOpacity style={styles.button}
+                                  onPress={() => navigation.openDrawer()}>
                     <Feather name="bell" size={24} color="black"/>
                 </TouchableOpacity>
 
                 <View>
-                    {Platform.OS !== 'web' && <Text style={styles.text}>{title}</Text>}
+                    {Platform.OS !== 'web' &&
+                        <Text style={styles.text}>{title}</Text>}
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={openRightDrawer}>
+                <TouchableOpacity style={styles.button}
+                                  onPress={openRightDrawer}>
                     <AntDesign name="user" size={24} color="black"/>
                 </TouchableOpacity>
             </View>
@@ -52,9 +55,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         paddingHorizontal: 30,
     },
-    container: {
-
-    },
+    container: {},
     button: {
         backgroundColor: "#FFFFFF",
         borderRadius: 30,
