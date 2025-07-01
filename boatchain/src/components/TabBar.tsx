@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import {useLinkBuilder, useTheme} from '@react-navigation/native';
 import {Text, PlatformPressable} from '@react-navigation/elements';
-import {BottomTabBarProps} from "@react-navigation/bottom-tabs";
+import {MaterialTopTabBarProps} from "@react-navigation/material-top-tabs";
 import {Feather, Entypo, Ionicons} from "@expo/vector-icons";
 import {TabBarButton} from "@/components/TabBarButton";
 import {useEffect, useState} from "react";
@@ -17,7 +17,7 @@ import Animated, {
     withSpring
 } from "react-native-reanimated";
 
-export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
+export function TabBar({state, descriptors, navigation}: MaterialTopTabBarProps) {
     const {colors} = useTheme();
     const {buildHref} = useLinkBuilder();
     const icon = {
@@ -32,7 +32,7 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
     const [dimensions, setDimensions] = useState({height: 20, width: 100}); // Initial dimensions doesn't matter
 
     const buttonWidth = dimensions.width / state.routes.length;
-    const circleSize = Platform.OS === 'web' ? (dimensions.height - 60) * 3 : dimensions.height - 60;
+    const circleSize = Platform.OS === 'web' ? (dimensions.height - 20) * 3 : dimensions.height - 20;
 
     const onTabBarLayout = (event: LayoutChangeEvent) => {
         setDimensions({
@@ -60,7 +60,6 @@ export function TabBar({state, descriptors, navigation}: BottomTabBarProps) {
                 position: 'absolute',
                 backgroundColor: "#0536F8",
                 borderRadius: 30,
-                marginBottom: Platform.OS === 'web' ? undefined : 30,
                 height: circleSize,
                 width: circleSize,
             }]}/>
@@ -114,7 +113,6 @@ const styles = StyleSheet.create({
     tabBar: {
         position: 'absolute',
         bottom: Platform.OS === 'web' ? undefined : 0,
-        paddingBottom: Platform.OS === 'web' ? undefined : 50,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
