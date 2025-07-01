@@ -8,7 +8,7 @@ import {
 import {useLinkBuilder, useTheme} from '@react-navigation/native';
 import {Text, PlatformPressable} from '@react-navigation/elements';
 import {MaterialTopTabBarProps} from "@react-navigation/material-top-tabs";
-import {Feather, Entypo, Ionicons} from "@expo/vector-icons";
+import {Feather, Entypo, Ionicons, FontAwesome6} from "@expo/vector-icons";
 import {TabBarButton} from "@/components/TabBarButton";
 import {useEffect, useState} from "react";
 import Animated, {
@@ -22,7 +22,7 @@ export function TabBar({state, descriptors, navigation}: MaterialTopTabBarProps)
     const {buildHref} = useLinkBuilder();
     const icon = {
         index: (props: any) => <Feather name={'home'} size={24} {...props} />,
-        shop: (props: any) => <Feather name={'shopping-bag'}
+        shop: (props: any) => <FontAwesome6 name={'sailboat'}
                                        size={24} {...props} />,
         chat: (props: any) => <Ionicons name={'chatbubbles-outline'}
                                         size={24} {...props} />,

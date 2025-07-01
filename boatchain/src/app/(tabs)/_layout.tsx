@@ -34,7 +34,7 @@ const TabsNavigator = () => {
     return (
         <SafeAreaView style={{flex: 1}}>
             {/* En tête */}
-            <PageLayout title={currentTitle}/>
+            <PageLayout title={currentTitle} newNotification={true}/>
 
             {/* Tabs déplacés en-dessous avec un padding */}
             <View style={{flex: 1}}>
