@@ -15,11 +15,10 @@ import { AntDesign, Feather } from "@expo/vector-icons";
 
 type PageLayoutProps = {
   title?: string;
-  children?: ReactNode;
   newNotification?: boolean
 };
 
-const PageLayout = ({ title, children, newNotification }: PageLayoutProps) => {
+const PageLayout = ({ title, newNotification }: PageLayoutProps) => {
   const navigation = useNavigation();
   const route = useRoute();
   const { openRightDrawer } = useContext(RightDrawerContext);

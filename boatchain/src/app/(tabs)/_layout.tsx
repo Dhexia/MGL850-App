@@ -7,12 +7,14 @@ import Discuss from "@/app/(tabs)/discuss";
 import {TabBar} from "@/components/TabBar";
 import React, {useState, useMemo} from 'react';
 import {Drawer as RightDrawer} from 'react-native-drawer-layout';
-import {View, TouchableOpacity, Text} from 'react-native';
+import {View, TouchableOpacity, Text, StyleSheet} from 'react-native';
 import RightDrawerContext from '@/contexts/RightDrawerContext';
 import {Slot, Stack} from 'expo-router';
 import {StatusBar} from 'expo-status-bar';
 import {SafeAreaView} from "react-native-safe-area-context";
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import {createDrawerNavigator} from '@react-navigation/drawer';
+import PageLayout from '@/components/PageLayout';
+import {useNavigationState} from '@react-navigation/native';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -25,6 +27,7 @@ export default function Layout() {
         openRightDrawer: () => setRightDrawerOpen(true),
         closeRightDrawer: () => setRightDrawerOpen(false),
     }), []);
+
     const styles = {
         drawer: {
             flex: 1,
@@ -43,7 +46,6 @@ export default function Layout() {
         }
     }
     return (
-        // <TabNavigator/>
         <RightDrawer
             drawerPosition="right"
             open={rightDrawerOpen}
@@ -82,22 +84,50 @@ export default function Layout() {
 }
 
 function TabNavigator(props: any) {
+    const state = useNavigationState((state) => state);
+    const currentTabRoute = state?.routes.find(r => r.name === 'Tabs')?.state;
+
+    const currentTabIndex = currentTabRoute?.index ?? 0;
+    const currentTabName = currentTabRoute?.routeNames?.[currentTabIndex] ?? 'index';
+
+
+    const titleMap = {
+        dashboard: 'Accueil',
+        boat: 'Bateaux',
+        discuss: 'Echanges',
+    };
+
+    const currentTitle = titleMap[currentTabName] || 'BoatChain';
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+        }
+    });
+
     return (
-        // @ts-ignore
-        <Tab.Navigator
-            tabBar={props => <TabBar {...props} />}
-            tabBarPosition="bottom"
-        >
-            <Tab.Screen name="dashboard" options={{title: 'Acceuil'}}>
-                {() => <Dashboard/>}
-            </Tab.Screen>
-            <Tab.Screen name="boat" options={{title: 'Bateaux'}}>
-                {() => <Boat/>}
-            </Tab.Screen>
-            <Tab.Screen name="discuss" options={{title: 'Echanges'}}>
-                {() => <Discuss/>}
-            </Tab.Screen>
-        </Tab.Navigator>
+        <View style={styles.container}>
+            <PageLayout title={currentTitle} newNotification={true}/>
+            {/*
+                @ts-ignore
+            */}
+            <Tab.Navigator
+                tabBar={props => <TabBar {...props} />}
+                tabBarPosition="bottom"
+            >
+                <Tab.Screen name="dashboard" options={{title: 'Acceuil'}}>
+                    {() => <Dashboard/>}
+                </Tab.Screen>
+                <Tab.Screen name="boat" options={{title: 'Bateaux'}}>
+                    {() => <Boat/>}
+                </Tab.Screen>
+                <Tab.Screen name="discuss" options={{title: 'Echanges'}}>
+                    {() => <Discuss/>}
+                </Tab.Screen>
+            </Tab.Navigator>
+        </View>
+
+
     );
 }
 
