@@ -7,6 +7,7 @@ import {
 } from "react-native-reanimated";
 import Animated from "react-native-reanimated"
 import {useEffect} from "react";
+import {MaterialCommunityIcons} from "@expo/vector-icons";
 
 export function TabBarButton({
                                  onPress,
@@ -33,6 +34,14 @@ export function TabBarButton({
         }
     });
 
+    const renderIcon = (routeName, props) => {
+        if (typeof icon[routeName] === "function") {
+            return icon[routeName](props);
+        }
+        // fallback icon
+        return <MaterialCommunityIcons name="help-circle" {...props} />;
+    };
+
     const animatedTextStyle = useAnimatedStyle(() => {
         const opacity = interpolate(scale.value, [0, 1], [1, 0]);
 
@@ -53,9 +62,11 @@ export function TabBarButton({
 
                 }]}
             >
-                {icon[routeName]({
-                    color: isFocused ? "#ffffff" : "#222",
-                })}
+                {
+                    renderIcon(routeName, {
+                        color: isFocused ? "#ffffff" : "#222",
+                    })
+                }
 
                 {/*<Animated.Text*/}
                 {/*    style={[animatedTextStyle, {color: isFocused ? "#fff" : "#222"}]}>*/}

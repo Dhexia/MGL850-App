@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, send_from_directory, make_response
+from flask_cors import CORS
 import os
 import json
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configurations
 IMAGE_FOLDER = os.path.join(app.root_path, 'static/images/boat')

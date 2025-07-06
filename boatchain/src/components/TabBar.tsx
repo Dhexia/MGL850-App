@@ -8,7 +8,7 @@ import {
 import {useLinkBuilder, useTheme} from '@react-navigation/native';
 import {Text, PlatformPressable} from '@react-navigation/elements';
 import {MaterialTopTabBarProps} from "@react-navigation/material-top-tabs";
-import {Feather, Entypo, Ionicons, FontAwesome6} from "@expo/vector-icons";
+import {Feather, Entypo, Ionicons, FontAwesome6, MaterialCommunityIcons} from "@expo/vector-icons";
 import {TabBarButton} from "@/components/TabBarButton";
 import {useEffect, useState} from "react";
 import Animated, {
@@ -17,17 +17,18 @@ import Animated, {
     withSpring
 } from "react-native-reanimated";
 
-export function TabBar({state, descriptors, navigation}: MaterialTopTabBarProps) {
+export function TabBar({
+                           state,
+                           descriptors,
+                           navigation
+                       }: MaterialTopTabBarProps) {
     const {colors} = useTheme();
     const {buildHref} = useLinkBuilder();
     const icon = {
-        index: (props: any) => <Feather name={'home'} size={24} {...props} />,
-        shop: (props: any) => <FontAwesome6 name={'sailboat'}
-                                       size={24} {...props} />,
-        chat: (props: any) => <Ionicons name={'chatbubbles-outline'}
-                                        size={24} {...props} />,
-
-    }
+        index: (props) => <MaterialCommunityIcons name="home" {...props} />,
+        shop: (props) => <MaterialCommunityIcons name="boat" {...props} />,
+        chat: (props) => <MaterialCommunityIcons name="chat" {...props} />,
+    };
 
     const [dimensions, setDimensions] = useState({height: 20, width: 100}); // Initial dimensions doesn't matter
 

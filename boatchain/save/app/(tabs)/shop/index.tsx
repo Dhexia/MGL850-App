@@ -1,7 +1,15 @@
-import {View, Text, StyleSheet, Image, Animated} from "react-native";
+import {
+    View,
+    Text,
+    StyleSheet,
+    Image,
+    Animated,
+    Pressable
+} from "react-native";
 import {useEffect, useState} from "react";
 import ScrollView = Animated.ScrollView;
 import {FontAwesome6} from "@expo/vector-icons";
+import {Link} from "expo-router";
 
 const ShopPage = () => {
     const [boats, setBoats] = useState([]);
@@ -91,9 +99,11 @@ const BoatTile = ({boat}) => {
                             {specification?.city}, {specification?.postal_code}
                         </Text>
                     </View>
-                    <View style={tileStyles.moreContainer}>
-                        <Text style={tileStyles.more}>Voir plus</Text>
-                    </View>
+                    <Link href="/(tabs)/shop/BoatDetailsPage" asChild>
+                        <Pressable style={tileStyles.moreContainer}>
+                            <Text style={tileStyles.more}>Voir plus</Text>
+                        </Pressable>
+                    </Link>
                 </View>
             </View>
         </View>
@@ -123,7 +133,7 @@ const BoatChainValidated = ({status}: { status: string }) => {
             </View>
         )
     } else {
-                return (
+        return (
             <View style={boatChainValidatedStyles.container}>
                 <FontAwesome6 name={'sailboat'}
                               size={12}
