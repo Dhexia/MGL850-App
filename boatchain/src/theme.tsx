@@ -1,5 +1,5 @@
 import {createContext, useContext, useMemo} from "react";
-import {useColorScheme} from "react-native";
+import {TextStyle, useColorScheme} from "react-native";
 
 const colors = {
     light: {
@@ -10,7 +10,9 @@ const colors = {
         neutral: "#E5E7EB",
         backgroundDark: "#000000",
         surfaceLight: "#FFFFFF",
-        destructive: "#E61515"
+        destructive: "#E61515",
+        textDark: "#000000",
+        textLight: "#FFFFFF",
     },
     dark: {
         surfaceDark: "#F9FBFB",
@@ -20,32 +22,44 @@ const colors = {
         neutral: "#3A506B",
         backgroundDark: "#FFFFFF",
         surfaceLight: "#1B1F3B",
-        destructive: "#E61515"
+        destructive: "#E61515",
+        textDark: "#FFFFFF",
+        textLight: "#000000",
     }
 }
 
-const textStyles = {
+type NamedTextStyles = {
+  [key: string]: TextStyle;
+};
+
+const textStyles: NamedTextStyles = {
     titleBig: {
         fontFamily: "Space Grotesk",
-        fontSize: "35",
+        fontSize: 35,
         fontWeight: "bold",
     },
     titleLarge: {
         fontFamily: "Space Grotesk",
-        fontSize: "20",
+        fontSize: 20,
         fontWeight: "bold",
     },
     titleMedium: {
         fontFamily: "Alberta Sans",
-        fontSize: "16",
+        fontSize: 16,
         fontWeight: "bold",
-        lineHeight: "18",
+        lineHeight: 18,
     },
     titleSmall: {
         fontFamily: "Alberta Sans",
-        fontSize: "12",
+        fontSize: 12,
         fontWeight: "bold",
-        lineHeight: "14",
+        lineHeight: 14,
+    },
+    bodyMedium: {
+        fontFamily: "Alberta Sans",
+        fontSize: 11,
+        fontWeight: "regular",
+        lineHeight: 14,
     }
 
 }
