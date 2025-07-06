@@ -1,11 +1,14 @@
 import {View, Text, Button, StyleSheet} from 'react-native';
-import {useRouter} from 'expo-router';
+import {Redirect, useRouter} from 'expo-router';
 import {useState} from "react";
+import {useTheme} from "@/theme";
 
 export default function Home() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [connected, setConnected] = useState(true);
+
+    const theme = useTheme();
 
     if (loading) {
         return <LoadingScreen/>;
@@ -16,14 +19,7 @@ export default function Home() {
     }
 
     return (
-        <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text>Accueil</Text>
-            <Button
-                title="Aller aux onglets du haut"
-                onPress={() => router.push('/(tabs)')}
-            />
-        </View>
+        <Redirect href="/(tabs)"/>
     );
 }
 
