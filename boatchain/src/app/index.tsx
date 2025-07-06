@@ -9,7 +9,7 @@ import {LinearGradient} from 'expo-linear-gradient';
 export default function Home() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [connected, setConnected] = useState(false);
+    const [connected, setConnected] = useState(true);
 
     const theme = useTheme();
 

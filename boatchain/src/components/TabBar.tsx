@@ -25,9 +25,9 @@ export function TabBar({
     const {colors} = useTheme();
     const {buildHref} = useLinkBuilder();
     const icon = {
-        index: (props) => <MaterialCommunityIcons name="home" {...props} />,
-        shop: (props) => <MaterialCommunityIcons name="boat" {...props} />,
-        chat: (props) => <MaterialCommunityIcons name="chat" {...props} />,
+        dashboard: (props) => <Feather name={'home'}{...props} />,
+        boat: (props) => <FontAwesome6 name={'sailboat'} {...props} />,
+        discuss: (props) => <Ionicons name={'chatbubbles-outline'} {...props} />,
     };
 
     const [dimensions, setDimensions] = useState({height: 20, width: 100}); // Initial dimensions doesn't matter
