@@ -4,14 +4,17 @@ import {
     StyleSheet,
     Image,
     Animated,
-    Pressable
+    Pressable,
+    ActivityIndicator
 } from "react-native";
 import {useEffect, useState} from "react";
 import ScrollView = Animated.ScrollView;
 import {FontAwesome6} from "@expo/vector-icons";
 import {Link} from "expo-router";
+import {useTheme} from "@/theme";
 
 const Boat = () => {
+    const theme = useTheme();
     const [boats, setBoats] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -33,10 +36,35 @@ const Boat = () => {
             });
     }, []);
 
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            paddingTop: 20,
+            backgroundColor: theme.colors.backgroundLight,
+        },
+        title: {
+            ...theme.textStyles.titleMedium,
+            marginBottom: 10,
+        },
+        text: {
+            fontSize: 20,
+            color: theme.colors.textDark,
+        },
+        tiles: {
+            flexDirection: "column",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            paddingBottom: 100,
+            paddingTop: 20,
+            width: "100%",
+            paddingHorizontal: "5%",
+        },
+    });
+
     if (loading) {
         return (
             <View style={styles.container}>
-                <Text style={styles.text}>Loading...</Text>
+                <ActivityIndicator />
             </View>
         );
     }
@@ -63,8 +91,79 @@ const Boat = () => {
 export default Boat;
 
 const BoatTile = ({boat}) => {
+    const theme = useTheme();
     const {specification, images} = boat;
     const mainImage = images?.[0]?.uri;
+
+    const tileStyles = StyleSheet.create({
+        card: {
+            overflow: "hidden",
+            width: "100%",
+            marginBottom: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.neutral,
+        },
+        image: {
+            width: "100%",
+            borderRadius: 15,
+            height: 180,
+        },
+        content: {
+            paddingVertical: 15,
+        },
+        titleContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+        },
+        title: {
+            ...theme.textStyles.titleMedium,
+            color: theme.colors.textDark,
+        },
+        descriptionContainer: {
+            paddingVertical: 5,
+        },
+        description: {
+            ...theme.textStyles.bodyMedium,
+            color: theme.colors.textDark,
+        },
+        otherContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+        },
+        moreContainer: {
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 30,
+            borderWidth: 1,
+            borderColor: theme.colors.neutral,
+            borderStyle: "solid",
+            justifyContent: "center",
+            backgroundColor: theme.colors.surfaceLight,
+        },
+        more: {
+            ...theme.textStyles.titleSmall,
+            color: theme.colors.textDark,
+        },
+        price: {
+            ...theme.textStyles.bodyMoney,
+            color: theme.colors.textDark,
+        },
+        boatTypeContainer: {
+            position: "absolute",
+            top: 10,
+            left: 10,
+            backgroundColor: theme.colors.background,
+            paddingHorizontal: 8,
+            paddingVertical: 5,
+            borderRadius: 30,
+            borderWidth: 2,
+            borderColor: theme.colors.neutral,
+        },
+        boatType: {
+            ...theme.textStyles.bodyMedium,
+            color: theme.colors.textDark,
+        }
+    });
 
     return (
         <View style={tileStyles.card}>
@@ -95,7 +194,7 @@ const BoatTile = ({boat}) => {
                         <Text style={tileStyles.price}>
                             {specification?.price?.toLocaleString('fr-FR')} $
                         </Text>
-                        <Text>
+                        <Text style={{...theme.textStyles.bodyMedium, color: theme.colors.textDark}}>
                             {specification?.city}, {specification?.postal_code}
                         </Text>
                     </View>
@@ -111,6 +210,26 @@ const BoatTile = ({boat}) => {
 };
 
 const BoatChainValidated = ({status}: { status: string }) => {
+    const theme = useTheme();
+    const boatChainValidatedStyles = StyleSheet.create({
+        container: {
+            flexDirection: "row",
+            alignItems: "center",
+            borderStyle: "solid",
+            borderWidth: 1,
+            borderRadius: 30,
+            paddingHorizontal: 8,
+            paddingVertical: 5,
+            borderColor: theme.colors.neutral
+        },
+        text: {
+            ...theme.textStyles.bodyMedium,
+            marginHorizontal: 5,
+            color: theme.colors.textDark,
+        }
+    })
+
+
     if (status === "validated") {
         return (
             <View style={boatChainValidatedStyles.container}>
@@ -145,117 +264,5 @@ const BoatChainValidated = ({status}: { status: string }) => {
     }
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "600",
-        marginBottom: 10,
-    },
-    text: {
-        fontSize: 20,
-        color: "#333",
-    },
-    tiles: {
-        flexDirection: "column",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        paddingBottom: 100,
-        paddingTop: 20,
-        width: "100%",
-        paddingHorizontal: "5%",
-    },
-});
 
-const tileStyles = StyleSheet.create({
-    card: {
-        overflow: "hidden",
-        width: "100%",
-        marginBottom: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB",
-    },
-    image: {
-        width: "100%",
-        borderRadius: 15,
-        height: 180,
-    },
-    content: {
-        paddingVertical: 15,
-    },
-    titleContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: "700",
-    },
-    descriptionContainer: {
-        paddingVertical: 5,
-    },
-    description: {
-        fontSize: 14,
-        color: "#666",
-        marginTop: 5,
-    },
-    otherContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-    moreContainer: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 30,
-        borderWidth: 1,
-        borderColor: "#E5E7EB",
-        borderStyle: "solid",
-        justifyContent: "center",
-        backgroundColor: "#FFFFFF",
-    },
-    more: {
-        fontSize: 13,
-        fontWeight: "700",
-    },
-    price: {
-        fontSize: 16,
-        fontWeight: "700",
-    },
-    boatTypeContainer: {
-        position: "absolute",
-        top: 10,
-        left: 10,
-        backgroundColor: "#dadada",
-        paddingHorizontal: 8,
-        paddingVertical: 5,
-        borderRadius: 30,
-        borderWidth: 2,
-        borderColor: "#FFFFFF",
-    },
-    boatType: {
-        fontSize: 12,
-        fontWeight: "900",
-    }
-});
-
-const boatChainValidatedStyles = StyleSheet.create({
-    container: {
-        flexDirection: "row",
-        alignItems: "center",
-        borderStyle: "solid",
-        borderWidth: 1,
-        borderRadius: 30,
-        paddingHorizontal: 8,
-        paddingVertical: 5,
-        borderColor: "#E5E7EB"
-    },
-    text: {
-        fontSize: 12,
-        marginHorizontal: 5,
-        fontWeight: "700",
-    }
-})
 

@@ -7,14 +7,12 @@ import Discuss from "@/app/(tabs)/discuss";
 import {TabBar} from "@/components/TabBar";
 import React, {useState, useMemo} from 'react';
 import {Drawer as RightDrawer} from 'react-native-drawer-layout';
-import {View, TouchableOpacity, Text, StyleSheet} from 'react-native';
+import {Dimensions, View, Text, StyleSheet, Platform} from 'react-native';
 import RightDrawerContext from '@/contexts/RightDrawerContext';
-import {Slot, Stack} from 'expo-router';
-import {StatusBar} from 'expo-status-bar';
-import {SafeAreaView} from "react-native-safe-area-context";
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import PageLayout from '@/components/PageLayout';
 import {useNavigationState} from '@react-navigation/native';
+import {useTheme} from "@/theme";
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -27,13 +25,22 @@ export default function Layout() {
         openRightDrawer: () => setRightDrawerOpen(true),
         closeRightDrawer: () => setRightDrawerOpen(false),
     }), []);
+    const theme = useTheme();
 
     const styles = {
+        drawerRight: {
+            width: Platform.OS === 'web' ? '20%' : '66%',
+            minWidth: Platform.OS === 'web' ? 300 : undefined,
+        },
         drawer: {
             flex: 1,
-            paddingVertical: "20%",
             paddingHorizontal: 20,
-            backgroundColor: '#F9FBFB',
+            backgroundColor: theme.colors.backgroundLight,
+            paddingVertical: 30,
+        },
+        drawerTitle: {
+            ...theme.textStyles.titleLarge,
+            color: theme.colors.textDark,
         },
         user: {
             height: 40,
@@ -51,11 +58,14 @@ export default function Layout() {
             open={rightDrawerOpen}
             onOpen={() => setRightDrawerOpen(true)}
             onClose={() => setRightDrawerOpen(false)}
-            drawerStyle={{
-                width: '66%',
-            }}
+            drawerStyle={styles.drawerRight}
             renderDrawerContent={() => (
-                <Text>Right Drawer</Text>
+                <View style={styles.drawer}>
+                    <View>
+                        <Text
+                            style={styles.drawerTitle}>Right drawer</Text>
+                    </View>
+                </View>
             )}
         >
             <RightDrawerContext.Provider value={contextValue}>
@@ -63,7 +73,10 @@ export default function Layout() {
                     screenOptions={{
                         drawerPosition: 'left',
                         headerShown: false,
-                        drawerStyle: {width: '66%'},
+                        drawerStyle: {
+                            width: Platform.OS === 'web' ? '20%' : '66%',
+                            minWidth: Platform.OS === 'web' ? 300 : undefined,
+                        },
                     }}
                     drawerContent={() => (
                         <View style={styles.drawer}>
@@ -84,11 +97,14 @@ export default function Layout() {
 }
 
 function TabNavigator(props: any) {
+    const screenHeight = Dimensions.get('window').height;
     const state = useNavigationState((state) => state);
     const currentTabRoute = state?.routes.find(r => r.name === 'Tabs')?.state;
 
     const currentTabIndex = currentTabRoute?.index ?? 0;
     const currentTabName = currentTabRoute?.routeNames?.[currentTabIndex] ?? 'index';
+    const theme = useTheme();
+
 
 
     const titleMap = {
@@ -102,18 +118,30 @@ function TabNavigator(props: any) {
     const styles = StyleSheet.create({
         container: {
             flex: 1,
+            alignItems: 'center',
+            backgroundColor: theme.colors.backgroundLight,
+        },
+        tabBar: {
+            top: Platform.OS === 'web' ? -75 : 0,
+            elevation: 2,
+            width: Platform.OS === 'web' ? "70%" : "100%",
+            maxWidth: Platform.OS === 'web' ? 700 : undefined,
+            minHeight: Platform.OS === 'web' ? screenHeight : undefined,
         }
     });
 
     return (
         <View style={styles.container}>
             <PageLayout title={currentTitle} newNotification={true}/>
+
+
             {/*
                 @ts-ignore
             */}
             <Tab.Navigator
                 tabBar={props => <TabBar {...props} />}
-                tabBarPosition="bottom"
+                tabBarPosition={Platform.OS === 'web' ? "top" : "bottom"}
+                style={styles.tabBar}
             >
                 <Tab.Screen name="dashboard" options={{title: 'Acceuil'}}>
                     {() => <Dashboard/>}

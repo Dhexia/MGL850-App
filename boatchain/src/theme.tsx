@@ -13,6 +13,9 @@ const colors = {
         destructive: "#E61515",
         textDark: "#000000",
         textLight: "#FFFFFF",
+        background: "#F9FBFB",
+        border: 'rgb(216, 216, 216)',
+        text: "#000",
     },
     dark: {
         surfaceDark: "#F9FBFB",
@@ -25,11 +28,13 @@ const colors = {
         destructive: "#E61515",
         textDark: "#FFFFFF",
         textLight: "#000000",
+        background: "#0F131B",
+        text: "#FFF",
     }
 }
 
 type NamedTextStyles = {
-  [key: string]: TextStyle;
+    [key: string]: TextStyle;
 };
 
 const textStyles: NamedTextStyles = {
@@ -60,6 +65,12 @@ const textStyles: NamedTextStyles = {
         fontSize: 11,
         fontWeight: "regular",
         lineHeight: 14,
+    },
+    bodyMoney: {
+        fontFamily: "Space Grotesk",
+        fontSize: 16,
+        fontWeight: "bold",
+        lineHeight: 18
     }
 
 }

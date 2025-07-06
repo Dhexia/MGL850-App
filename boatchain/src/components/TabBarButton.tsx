@@ -8,6 +8,8 @@ import {
 import Animated from "react-native-reanimated"
 import {useEffect} from "react";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
+import {useTheme} from "@/theme";
+
 
 export function TabBarButton({
                                  onPress,
@@ -17,6 +19,9 @@ export function TabBarButton({
                                  icon
                              }) {
     const scale = useSharedValue(0);
+
+    const theme = useTheme();
+
 
     useEffect(() => {
         scale.value = withSpring(
@@ -64,14 +69,9 @@ export function TabBarButton({
             >
                 {
                     renderIcon(routeName, {
-                        color: isFocused ? "#ffffff" : "#222",
+                        color: isFocused ? theme.colors.textLight : theme.colors.textDark,
                     })
                 }
-
-                {/*<Animated.Text*/}
-                {/*    style={[animatedTextStyle, {color: isFocused ? "#fff" : "#222"}]}>*/}
-                {/*    {routeName}*/}
-                {/*</Animated.Text>*/}
             </Animated.View>
 
 
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         gap: 5,
-        marginVertical: 8
+        marginVertical: 0
     },
 })
 

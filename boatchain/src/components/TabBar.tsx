@@ -5,10 +5,16 @@ import {
     StyleSheet,
     LayoutChangeEvent
 } from 'react-native';
-import {useLinkBuilder, useTheme} from '@react-navigation/native';
+import {useLinkBuilder} from '@react-navigation/native';
 import {Text, PlatformPressable} from '@react-navigation/elements';
 import {MaterialTopTabBarProps} from "@react-navigation/material-top-tabs";
-import {Feather, Entypo, Ionicons, FontAwesome6, MaterialCommunityIcons} from "@expo/vector-icons";
+import {
+    Feather,
+    Entypo,
+    Ionicons,
+    FontAwesome6,
+    MaterialCommunityIcons
+} from "@expo/vector-icons";
 import {TabBarButton} from "@/components/TabBarButton";
 import {useEffect, useState} from "react";
 import Animated, {
@@ -16,24 +22,35 @@ import Animated, {
     useSharedValue,
     withSpring
 } from "react-native-reanimated";
+import {useTheme} from "@/theme";
+
 
 export function TabBar({
                            state,
                            descriptors,
                            navigation
                        }: MaterialTopTabBarProps) {
-    const {colors} = useTheme();
+    const theme = useTheme();
     const {buildHref} = useLinkBuilder();
     const icon = {
-        dashboard: (props) => <Feather name={'home'}{...props} />,
-        boat: (props) => <FontAwesome6 name={'sailboat'} {...props} />,
-        discuss: (props) => <Ionicons name={'chatbubbles-outline'} {...props} />,
+        dashboard: (props) => <Feather name={'home'}
+                                       {...props}
+                                       size={24}
+        />,
+        boat: (props) => <FontAwesome6 name={'sailboat'}
+                                       {...props}
+                                       size={24}
+        />,
+        discuss: (props) => <Ionicons name={'chatbubbles-outline'}
+                                      {...props}
+                                      size={24}
+        />,
     };
 
     const [dimensions, setDimensions] = useState({height: 20, width: 100}); // Initial dimensions doesn't matter
 
     const buttonWidth = dimensions.width / state.routes.length;
-    const circleSize = Platform.OS === 'web' ? (dimensions.height - 20) * 3 : dimensions.height - 20;
+    const circleSize = Platform.OS === 'web' ? (dimensions.height - 13) * 3 : dimensions.height - 13;
 
     const onTabBarLayout = (event: LayoutChangeEvent) => {
         setDimensions({
@@ -55,13 +72,38 @@ export function TabBar({
         tabPositionX.value = withSpring(buttonWidth * state.index + (buttonWidth / 2) - (circleSize) / 2, {duration: 1000});
     }, [state.index]);
 
+    const styles = StyleSheet.create({
+        tabBar: {
+            position: Platform.OS === 'web' ? 'relative' : 'absolute',
+
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: theme.colors.backgroundLight,
+            width: Platform.OS === 'web' ? '80%' : undefined,
+            maxWidth: 1000,
+            paddingVertical: 15,
+            alignSelf: 'center',
+            borderStyle: 'solid',
+            borderColor: theme.colors.neutral,
+
+            // Only for phone and tablet
+            borderTopWidth: Platform.OS === 'web' ? 0 : 1,
+            bottom: Platform.OS === 'web' ? undefined : 0,
+
+            // Only for web
+            height: Platform.OS === 'web' ? 75 : undefined,
+        },
+    })
+
+
     return (
         <View onLayout={onTabBarLayout} style={styles.tabBar}>
             <Animated.View style={[animatedStyle, {
                 position: 'absolute',
-                backgroundColor: "#0536F8",
-                borderRadius: 30,
-                height: circleSize,
+                backgroundColor: theme.colors.primary,
+                borderRadius: Platform.OS === "web" ? 0 : 30,
+                height: Platform.OS === "web" ? 75 : circleSize,
                 width: circleSize,
             }]}/>
             {state.routes.map((route, index) => {
@@ -110,26 +152,3 @@ export function TabBar({
     );
 }
 
-const styles = StyleSheet.create({
-    tabBar: {
-        position: 'absolute',
-        bottom: Platform.OS === 'web' ? undefined : 0,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#FFF',
-        width: Platform.OS === 'web' ? '80%' : undefined,
-        maxWidth: 1000,
-        paddingVertical: 15,
-        alignSelf: 'center',
-        borderStyle: 'solid',
-        borderColor: '#E5E7EB',
-
-        // Only for phone and tablet
-        borderTopWidth: 1,
-
-        // Only for web
-        borderBottomWidth: 1,
-
-    },
-})
