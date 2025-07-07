@@ -5,7 +5,8 @@ import {
     Image,
     Animated,
     Pressable,
-    ActivityIndicator
+    ActivityIndicator,
+    Platform,
 } from "react-native";
 import {useEffect, useState} from "react";
 import ScrollView = Animated.ScrollView;
@@ -41,6 +42,8 @@ const Boat = () => {
             flex: 1,
             paddingTop: 20,
             backgroundColor: theme.colors.backgroundLight,
+            width: "100%",
+            flexDirection: "column",
         },
         title: {
             ...theme.textStyles.titleMedium,
@@ -51,20 +54,22 @@ const Boat = () => {
             color: theme.colors.textDark,
         },
         tiles: {
-            flexDirection: "column",
-            flexWrap: "wrap",
-            justifyContent: "center",
+            flexDirection: Platform.OS === 'web' ? "row" : "column",
+            flexWrap: Platform.OS === 'web' ? "wrap" : "nowrap",
+            justifyContent: Platform.OS === 'web' ? "space-evenly" : "flex-start",
+            alignItems: Platform.OS === 'web' ? "flex-start" : "stretch",
+            rowGap: Platform.OS === 'web' ? 24 : 0,
+            columnGap: Platform.OS === 'web' ? 24 : 0,
             paddingBottom: 100,
             paddingTop: 20,
-            width: "100%",
-            paddingHorizontal: "5%",
+            paddingHorizontal: 20,
+            // backgroundColor: "green",
         },
     });
-
     if (loading) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator />
+                <ActivityIndicator/>
             </View>
         );
     }
@@ -99,9 +104,11 @@ const BoatTile = ({boat}) => {
         card: {
             overflow: "hidden",
             width: "100%",
+            maxWidth: Platform.OS === 'web' ? 300 : undefined,
             marginBottom: 20,
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.neutral,
+            // backgroundColor: "pink",
         },
         image: {
             width: "100%",
@@ -181,7 +188,13 @@ const BoatTile = ({boat}) => {
             <View style={tileStyles.content}>
                 <View style={tileStyles.titleContainer}>
                     <Text
-                        style={tileStyles.title}>{specification?.title}</Text>
+                        style={tileStyles.title}
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                    >
+                        {specification?.title}
+
+                    </Text>
                     <BoatChainValidated status={specification?.status}/>
                 </View>
                 <View style={tileStyles.descriptionContainer}>
@@ -194,11 +207,14 @@ const BoatTile = ({boat}) => {
                         <Text style={tileStyles.price}>
                             {specification?.price?.toLocaleString('fr-FR')} $
                         </Text>
-                        <Text style={{...theme.textStyles.bodyMedium, color: theme.colors.textDark}}>
+                        <Text style={{
+                            ...theme.textStyles.bodyMedium,
+                            color: theme.colors.textDark
+                        }}>
                             {specification?.city}, {specification?.postal_code}
                         </Text>
                     </View>
-                    <Link href="/(tabs)/shop/BoatDetailsPage" asChild>
+                    <Link href="/boats/boat-detail-screen" asChild>
                         <Pressable style={tileStyles.moreContainer}>
                             <Text style={tileStyles.more}>Voir plus</Text>
                         </Pressable>

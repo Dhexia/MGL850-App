@@ -124,8 +124,8 @@ function TabNavigator(props: any) {
         tabBar: {
             top: Platform.OS === 'web' ? -75 : 0,
             elevation: 2,
-            width: Platform.OS === 'web' ? "70%" : "100%",
-            maxWidth: Platform.OS === 'web' ? 700 : undefined,
+            width: Platform.OS === 'web' ? "75%" : "100%",
+            maxWidth: Platform.OS === 'web' ? 1800 : undefined,
             minHeight: Platform.OS === 'web' ? screenHeight : undefined,
         }
     });
