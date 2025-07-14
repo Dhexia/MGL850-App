@@ -26,9 +26,9 @@
       "date": "2025-03-17",
       "title": "Expertise structurelle complète",
       "expires": "2026-03-17",
-      "status": "valid",
+      "status": "suspicious",
       "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
-      "attachements": [
+      "attachments": [
         {
           "title": "expertise_struct_mars25.pdf",
           "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"

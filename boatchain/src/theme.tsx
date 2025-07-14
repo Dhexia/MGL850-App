@@ -60,6 +60,12 @@ const textStyles: NamedTextStyles = {
         fontWeight: "bold",
         lineHeight: 14,
     },
+    bodyLarge: {
+        fontFamily: "Alberta Sans",
+        fontSize: 13,
+        fontWeight: "regular",
+        lineHeight: 15,
+    },
     bodyMedium: {
         fontFamily: "Alberta Sans",
         fontSize: 11,

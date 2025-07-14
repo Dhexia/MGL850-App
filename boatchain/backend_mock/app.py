@@ -8,6 +8,7 @@ CORS(app)  # Enable CORS for all routes
 
 # Configurations
 IMAGE_FOLDER = os.path.join(app.root_path, 'static/images/boat')
+ATTACHMENT_FOLDER = os.path.join(app.root_path, 'static/attachments/boat')
 JSON_FOLDER = os.path.join(app.root_path, 'data/boat')
 
 
@@ -45,9 +46,10 @@ def get_image(id, image_name):
         return jsonify({"error": "Image not found"}), 404
 
 
-@app.route('/attachements/<id>/<attachment_name>')
+@app.route('/attachments/<id>/<attachment_name>')
 def get_attachment(id, attachment_name):
-    attachment_path = os.path.join(IMAGE_FOLDER, id, attachment_name)
+    attachment_path = os.path.join(ATTACHMENT_FOLDER, id, attachment_name)
+    print(attachment_path)
     if os.path.exists(attachment_path):
         return send_from_directory(os.path.dirname(attachment_path), os.path.basename(attachment_path))
     else:

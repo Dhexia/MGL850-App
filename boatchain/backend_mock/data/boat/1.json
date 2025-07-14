@@ -26,12 +26,54 @@
       "date": "2025-03-17",
       "title": "Expertise structurelle complète",
       "expires": "2026-03-17",
-      "status": "valid",
+      "status": "validated",
       "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
-      "attachements": [
+      "attachments": [
         {
           "title": "expertise_struct_mars25.pdf",
-          "uri": "http://192.168.2.10 :5000/attachments/1/expertise_struct_mars25.pdf"
+          "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+        }
+      ]
+    },
+    {
+      "person": "John Doe",
+      "date": "2024-03-17",
+      "title": "Expertise structurelle complète",
+      "expires": "2026-03-17",
+      "status": "validated",
+      "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
+      "attachments": [
+        {
+          "title": "expertise_struct_mars25.pdf",
+          "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "boatName": "Sun Odyssey 380",
+      "date": "2025-03-17",
+      "shortTitle": "Mécanique & Moteur",
+      "title": "Expertise structurelle complète",
+      "description": "L’ancien inverseur présentait des signes de patinage. Installation d’un modèle neuf compatible Yanmar.",
+      "attachments": [
+        {
+          "title": "facture_inverseur_mars25.pdf",
+          "uri": "http://192.168.2.10:5000/attachments/1/facture_inverseur_mars25.pdf"
+        }
+      ]
+    },
+    {
+      "boatName": "Sun Odyssey 380",
+      "date": "2025-03-17",
+      "shortTitle": "Mécanique & Moteur",
+      "title": "Expertise structurelle complète",
+      "description": "L’ancien inverseur présentait des signes de patinage. Installation d’un modèle neuf compatible Yanmar.",
+      "attachments": [
+        {
+          "title": "facture_inverseur_mars25.pdf",
+          "uri": "http://192.168.2.10:5000/attachments/1/facture_inverseur_mars25.pdf"
         }
       ]
     }

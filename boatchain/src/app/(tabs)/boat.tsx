@@ -1,18 +1,18 @@
 import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    Animated,
-    Pressable,
     ActivityIndicator,
+    Animated,
+    Image,
     Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import {useEffect, useState} from "react";
-import ScrollView = Animated.ScrollView;
-import {FontAwesome6} from "@expo/vector-icons";
 import {Link} from "expo-router";
 import {useTheme} from "@/theme";
+import {BoatChainValidated} from "@/components/BoatChainValidated";
+import ScrollView = Animated.ScrollView;
 
 const Boat = () => {
     const theme = useTheme();
@@ -97,7 +97,7 @@ export default Boat;
 
 const BoatTile = ({boat}) => {
     const theme = useTheme();
-    const {specification, images} = boat;
+    const {specification, images, certificates, events} = boat;
     const mainImage = images?.[0]?.uri;
 
     const tileStyles = StyleSheet.create({
@@ -214,7 +214,18 @@ const BoatTile = ({boat}) => {
                             {specification?.city}, {specification?.postal_code}
                         </Text>
                     </View>
-                    <Link href="/boats/boat-detail-screen" asChild>
+                    <Link
+                        href={{
+                            pathname: "/boats/boat-detail-screen",
+                            params: {
+                                specification: JSON.stringify(specification),
+                                images: JSON.stringify(images),
+                                certificates: JSON.stringify(certificates),
+                                events: JSON.stringify(events),
+                            },
+                        }}
+                        asChild
+                    >
                         <Pressable style={tileStyles.moreContainer}>
                             <Text style={tileStyles.more}>Voir plus</Text>
                         </Pressable>
@@ -224,61 +235,6 @@ const BoatTile = ({boat}) => {
         </View>
     );
 };
-
-const BoatChainValidated = ({status}: { status: string }) => {
-    const theme = useTheme();
-    const boatChainValidatedStyles = StyleSheet.create({
-        container: {
-            flexDirection: "row",
-            alignItems: "center",
-            borderStyle: "solid",
-            borderWidth: 1,
-            borderRadius: 30,
-            paddingHorizontal: 8,
-            paddingVertical: 5,
-            borderColor: theme.colors.neutral
-        },
-        text: {
-            ...theme.textStyles.bodyMedium,
-            marginHorizontal: 5,
-            color: theme.colors.textDark,
-        }
-    })
-
-
-    if (status === "validated") {
-        return (
-            <View style={boatChainValidatedStyles.container}>
-                <FontAwesome6 name={'sailboat'}
-                              size={12}
-                              color="#007AFF"
-                />
-                <Text style={boatChainValidatedStyles.text}>Validé par
-                    BoatChain</Text>
-            </View>
-        )
-    } else if (status === "suspicious") {
-        return (
-            <View style={boatChainValidatedStyles.container}>
-                <FontAwesome6 name={'sailboat'}
-                              size={12}
-                              color="#ff0000"
-                />
-                <Text style={boatChainValidatedStyles.text}>Suspicieux</Text>
-            </View>
-        )
-    } else {
-        return (
-            <View style={boatChainValidatedStyles.container}>
-                <FontAwesome6 name={'sailboat'}
-                              size={12}
-                              color="#ffb700"
-                />
-                <Text style={boatChainValidatedStyles.text}>Inconnu</Text>
-            </View>
-        )
-    }
-}
 
 
 
