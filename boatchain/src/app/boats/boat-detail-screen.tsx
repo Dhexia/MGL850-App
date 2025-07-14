@@ -44,7 +44,7 @@ export default function BoatDetailScreen() {
         },
         topContainer: {
             flexDirection: "row",
-            justifyContent: "flex-start",
+            justifyContent: "space-between",
             alignItems: "center",
             margin: 15
         },
