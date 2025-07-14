@@ -24,6 +24,7 @@ import BoatChainMainIcon
     from "@/assets/images/boatchainIcons/BoatChainMainIcon.svg";
 import SettingsIcon from "@/assets/images/boatchainIcons/SettingsIcon.svg";
 import RessourcesIcon from "@/assets/images/boatchainIcons/RessourcesIcon.svg";
+import {Link} from "expo-router";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -210,7 +211,9 @@ export default function Layout() {
                                 Paramètres
                             </Text>
                         </View>
-                        <View style={rightDrawerStyle.items}>
+                        <Link style={rightDrawerStyle.items}
+                            href={"/ressources/useful_ressources"}
+                        >
                             <View style={rightDrawerStyle.itemIconView}>
                                 <RessourcesIcon
                                     style={rightDrawerStyle.itemIcon}
@@ -219,7 +222,7 @@ export default function Layout() {
                             <Text style={rightDrawerStyle.itemTitle}>
                                 Ressources utiles
                             </Text>
-                        </View>
+                        </Link>
                     </View>
                     <View style={rightDrawerStyle.followedBoatsContainer}>
                         <View style={rightDrawerStyle.followedBoatsHeader}>
