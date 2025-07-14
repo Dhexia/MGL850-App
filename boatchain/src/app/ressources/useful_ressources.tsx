@@ -1,9 +1,8 @@
 import {useTheme} from "@/theme";
 
-import {StyleSheet, TouchableOpacity, View, Text, Button} from "react-native";
-import {AntDesign} from "@expo/vector-icons";
-import {Link, useNavigation} from "expo-router";
-import React, {use} from "react";
+import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import { Link } from "expo-router";
+import React from "react";
 
 import FAQIcon
     from "@/assets/images/boatchainIcons/ressourcesIcons/FAQIcon.svg";
@@ -19,6 +18,7 @@ import SecurityIcon
     from "@/assets/images/boatchainIcons/ressourcesIcons/SecurityIcon.svg";
 import LegalNoticeIcon
     from "@/assets/images/boatchainIcons/ressourcesIcons/LegalNoticeIcon.svg";
+import HeaderWithTitle from "@/components/HeaderWithTitle";
 
 interface ItemProps {
     icon: React.FC;
@@ -28,8 +28,6 @@ interface ItemProps {
 }
 
 export default function UsefulResources() {
-    const theme = useTheme();
-    const navigation = useNavigation();
     const styles = StyleSheet.create({
         content: {
             margin: 15,
@@ -77,57 +75,11 @@ export default function UsefulResources() {
 
     return (
         <View>
-            <Header/>
+            <HeaderWithTitle title={"Ressources utiles"}/>
             <View style={styles.content}>
                 {Pages.map((item, idx) => (
                     <Item key={idx} {...item} />
                 ))}
-            </View>
-        </View>
-    )
-}
-
-function Header() {
-    const theme = useTheme();
-    const styles = StyleSheet.create({
-        topContainer: {
-            flexDirection: "row",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            margin: 15
-        },
-        topLeftContainer: {},
-        backButton: {
-            borderRadius: 30,
-            borderWidth: 1,
-            borderColor: theme.colors.neutral,
-            backgroundColor: theme.colors.surfaceLight,
-            height: 40,
-            width: 40,
-            alignItems: "center",
-            justifyContent: "center",
-        },
-        topRightContainer: {
-            marginLeft: 10,
-        },
-        pageTitle: {
-            color: theme.colors.textDark,
-            ...theme.textStyles.titleLarge,
-        }
-    })
-
-    return (
-        <View style={styles.topContainer}>
-            <View style={styles.topLeftContainer}>
-                <TouchableOpacity style={styles.backButton}
-                                  onPress={() => navigation.goBack()}>
-                    <AntDesign name="arrowleft" size={25}/>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.topRightContainer}>
-                <Text style={styles.pageTitle}>
-                    Ressources utiles
-                </Text>
             </View>
         </View>
     )

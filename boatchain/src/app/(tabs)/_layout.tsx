@@ -211,17 +211,19 @@ export default function Layout() {
                                 Paramètres
                             </Text>
                         </View>
-                        <Link style={rightDrawerStyle.items}
+                        <Link
                             href={"/ressources/useful_ressources"}
                         >
-                            <View style={rightDrawerStyle.itemIconView}>
-                                <RessourcesIcon
-                                    style={rightDrawerStyle.itemIcon}
-                                />
+                            <View style={rightDrawerStyle.items}>
+                                <View style={rightDrawerStyle.itemIconView}>
+                                    <RessourcesIcon
+                                        style={rightDrawerStyle.itemIcon}
+                                    />
+                                </View>
+                                <Text style={rightDrawerStyle.itemTitle}>
+                                    Ressources utiles
+                                </Text>
                             </View>
-                            <Text style={rightDrawerStyle.itemTitle}>
-                                Ressources utiles
-                            </Text>
                         </Link>
                     </View>
                     <View style={rightDrawerStyle.followedBoatsContainer}>
