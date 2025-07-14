@@ -122,7 +122,7 @@ function ConnectionScreen() {
             >
                 <View style={connectionScreenStyles.middle}>
                     <View style={connectionScreenStyles.logo}>
-                        <BoatChainMainIcon width="100%" height="100%"/>
+                        <BoatChainMainIcon width="100%" height="100%" color={theme.colors.textLight} />
                     </View>
                     <View style={connectionScreenStyles.textContainer}>
                         <Text style={connectionScreenStyles.title}>
