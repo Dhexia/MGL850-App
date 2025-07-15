@@ -191,16 +191,21 @@ export default function Layout() {
                         </View>
                     </View>
                     <View>
-                        <View style={rightDrawerStyle.items}>
-                            <View style={rightDrawerStyle.itemIconView}>
-                                <BoatChainMainIcon
-                                    style={rightDrawerStyle.itemIcon}
-                                />
+                        <Link
+                            href={"/boats/new-boat"}
+                            style={rightDrawerStyle.items}
+                        >
+                            <View style={rightDrawerStyle.items}>
+                                <View style={rightDrawerStyle.itemIconView}>
+                                    <BoatChainMainIcon
+                                        style={rightDrawerStyle.itemIcon}
+                                    />
+                                </View>
+                                <Text style={rightDrawerStyle.itemTitle}>
+                                    Mes Bateaux
+                                </Text>
                             </View>
-                            <Text style={rightDrawerStyle.itemTitle}>
-                                Mes Bateaux
-                            </Text>
-                        </View>
+                        </Link>
                         <View style={rightDrawerStyle.items}>
                             <View style={rightDrawerStyle.itemIconView}>
                                 <SettingsIcon
@@ -213,6 +218,7 @@ export default function Layout() {
                         </View>
                         <Link
                             href={"/ressources/useful_ressources"}
+                             style={rightDrawerStyle.items}
                         >
                             <View style={rightDrawerStyle.items}>
                                 <View style={rightDrawerStyle.itemIconView}>
