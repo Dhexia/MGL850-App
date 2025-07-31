@@ -1,18 +1,29 @@
+// src/auth/jwt-auth.guard.ts
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
+import { IS_PUBLIC_KEY } from './public.decorator';
 
-/**
- * Guard global :
- * – Laisse passer toutes les requêtes non-POST (lecture publique)
- * – Exige un JWT valide pour les requêtes POST (écriture)
- */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private reflector: Reflector) {
+    super();
+  }
+
   canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest<Request>();
-    if (req.method !== 'POST') {
-      return true; // aucune protection sur GET, PUT, etc. sauf POST
-    }
+
+    // Routes marquées @Public() passent sans JWT
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
+    // Comportement existant: toutes les requêtes non-POST passent
+    if (req.method !== 'POST') return true;
+
+    // POST protégés par JWT
     return super.canActivate(context);
   }
 }

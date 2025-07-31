@@ -1,27 +1,24 @@
-import { Controller, Get, Query, Post, Body } from '@nestjs/common';
+// src/auth/auth.controller.ts
+import { Controller, Get, Query, Post, Body, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Public } from './public.decorator'; // si déjà en place
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   constructor(private readonly auth: AuthService) {}
 
-  /**
-   * Génère un nonce pour l'adresse donnée.
-   * @param address L'adresse Ethereum pour laquelle générer le nonce.
-   * @returns Un objet contenant le nonce.
-   */
+  @Public()
   @Get('nonce')
   getNonce(@Query('address') address: string) {
+    this.logger.debug(`GET /auth/nonce address=${address}`);
     return { nonce: this.auth.generateNonce(address) };
   }
 
-  /**
-   * Authentifie l'utilisateur en vérifiant la signature.
-   * @param body Contient l'adresse Ethereum et la signature.
-   * @returns Un objet contenant le token JWT si l'authentification réussit.
-   */
+  @Public()
   @Post('login')
-  login(@Body() body: { address: string; signature: string }) {
-    return this.auth.login(body.address, body.signature);
+  login(@Body() body: { nonce: string; signature: string }) {
+    this.logger.debug(`POST /auth/login sig.len=${body?.signature?.length}`);
+    return this.auth.login(body.nonce, body.signature);
   }
 }

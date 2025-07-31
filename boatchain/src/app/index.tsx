@@ -1,163 +1,127 @@
-import {View, Text, Button, StyleSheet, Image} from 'react-native';
-import {Redirect, useRouter} from 'expo-router';
-import {useState} from "react";
-import {useTheme} from "@/theme";
-import BoatChainMainIcon
-    from "@/assets/images/boatchainIcons/BoatChainMainIcon.svg"
-import {LinearGradient} from 'expo-linear-gradient';
+import { View, Text, Image, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { useTheme } from '@/theme';
+import BoatChainMainIcon from '@/assets/images/boatchainIcons/BoatChainMainIcon.svg';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
+
+import {
+  createLoadingScreenStyles,
+  createConnectionScreenStyles,
+} from '@/styles/layout/HomeScreen.style';
 
 export default function Home() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [connected, setConnected] = useState(true);
+  const { jwt } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-    const theme = useTheme();
+  // écran de transition très court pour lisser le retour d'arrière-plan
+  const [booting, setBooting] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setBooting(false), 300);
+    return () => clearTimeout(t);
+  }, []);
 
-    if (loading) {
-        return <LoadingScreen/>;
-    }
+  const connected = Boolean(jwt);
 
-    if (!connected) {
-        return <ConnectionScreen/>;
-    }
+  if (loading || booting) return <LoadingScreen />;
+  if (!connected) return <ConnectionScreen setLoading={setLoading} />;
 
-    return (
-        <Redirect href="/(tabs)"/>
-    );
+  return <Redirect href="/(tabs)" />;
 }
 
 function LoadingScreen() {
-    const loadingScreenStyles = StyleSheet.create({
-        container: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        text: {
-            fontSize: 32,
-            fontWeight: 'bold',
-        }
-    })
-    return (
-        <View style={loadingScreenStyles.container}>
-            <Text style={loadingScreenStyles.text}>Loading...</Text>
-        </View>
-    )
+  const styles = createLoadingScreenStyles();
+  return (
+    <View style={[styles.container, { backgroundColor: '#000' }]}>
+      <ActivityIndicator size="large" color="#fff" />
+      <Text style={[styles.text, { color: 'white', marginTop: 20 }]}>Chargement...</Text>
+    </View>
+  );
 }
 
-function ConnectionScreen() {
-    const theme = useTheme();
-    const connectionScreenStyles = StyleSheet.create({
-        container: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%'
-        },
-        middle: {
-            width: '90%',
-            alignItems: 'center',
-        },
-        logo: {
-            width: '60%',
-            maxWidth: 1000,
-            maxHeight: '60%',
-            alignItems: 'center',
-        },
-        textContainer: {
-            alignItems: 'center',
-        },
-        title: {
-            ...theme.textStyles.titleLarge,
-            color: theme.colors.textLight,
-        },
-        body: {
-            ...theme.textStyles.bodyMedium,
-            color: theme.colors.textLight,
-        },
-        bottomContainer: {
-            backgroundColor: theme.colors.surfaceLight,
-            width: '100%',
-            alignItems: 'center',
-            position: 'absolute',
-            bottom: 0,
-            borderTopLeftRadius: 14,
-            borderTopRightRadius: 14,
-            paddingVertical: 20
-        },
-        bigTitleContainer: {
-            paddingVertical: 30
-        },
-        bigTitle: {
-            ...theme.textStyles.titleBig,
-            color: theme.colors.textDark,
-        },
-        buttonsContainer: {
-            alignItems: 'center',
-            flexDirection: "row",
-            borderStyle: 'solid',
-            borderColor: theme.colors.neutral,
-            borderWidth: 1,
-            borderRadius: 30,
-            paddingVertical: 5,
-            paddingHorizontal: 15,
-            marginVertical: 15,
-        },
-        images: {
-            marginRight: 10,
-        },
-        buttonsText: {
-            ...theme.textStyles.titleMedium,
-            color: theme.colors.textDark,
-        }
-    })
-    return (
-        <View
-            style={[connectionScreenStyles.container, {backgroundColor: theme.colors.primary}]}>
-            <LinearGradient
-                style={connectionScreenStyles.container}
-                colors={["rgba(0,208,255,0.3)", "transparent"]}
-                start={{x: 0.5, y: 0}}
-                end={{x: 0.5, y: 1}}
-            >
-                <View style={connectionScreenStyles.middle}>
-                    <View style={connectionScreenStyles.logo}>
-                        <BoatChainMainIcon width="100%" height="100%" color={theme.colors.textLight} />
-                    </View>
-                    <View style={connectionScreenStyles.textContainer}>
-                        <Text style={connectionScreenStyles.title}>
-                            Bienvenue sur BoatChain
-                        </Text>
-                        <Text style={connectionScreenStyles.body}>
-                            Achetez, vendez et suivez des bateaux en toute
-                            confiance.
-                        </Text>
-                    </View>
-                </View>
-                <View style={connectionScreenStyles.bottomContainer}>
-                    <View style={connectionScreenStyles.bigTitleContainer}>
-                        <Text style={connectionScreenStyles.bigTitle}>Commençons
-                            !</Text>
-                    </View>
-                    <View style={connectionScreenStyles.buttonsContainer}>
-                        <Image
-                            source={require("@/assets/images/metamask.png")}
-                            style={connectionScreenStyles.images}
-                        />
-                        <Text style={connectionScreenStyles.buttonsText}>Continuer
-                            avec MetaMask</Text>
-                    </View>
-                    <View style={connectionScreenStyles.buttonsContainer}>
-                        <Image
-                            source={require("@/assets/images/walletConnect.png")}
-                            style={connectionScreenStyles.images}
-                        />
-                        <Text style={connectionScreenStyles.buttonsText}>Continuer
-                            avec WalletConnect</Text>
-                    </View>
-                </View>
-            </LinearGradient>
-        </View>
-    )
-}
+function ConnectionScreen({ setLoading }: { setLoading: (b: boolean) => void }) {
+  const theme = useTheme();
+  const styles = createConnectionScreenStyles(theme);
+  const { connect, address } = useWallet();
+  const { login } = useAuth();
+  const router = useRouter();
 
+  // étape 1: ouverture WalletConnect pour choisir le wallet
+  const handleOpenWalletConnect = async () => {
+    try {
+      await connect();
+      // à ce stade tu vas dans MetaMask, tu choisis le compte, puis tu reviens
+      // on n’enchaîne pas automatiquement la signature tant que tu n’as pas confirmé vouloir signer
+    } catch (e: any) {
+      Alert.alert('Connexion', e?.message ?? 'Erreur WalletConnect');
+    }
+  };
+
+  // étape 2: signature du nonce et login backend
+  const handleSignAndLogin = async () => {
+    try {
+      if (!address) {
+        Alert.alert('Connexion', 'Aucun wallet connecté. Ouvre d’abord WalletConnect.');
+        return;
+      }
+      setLoading(true);
+      await login();          // GET /auth/nonce → personal_sign(nonce) → POST /auth/login
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      // si le backend renvoie un 401 ou 400 on expose le message si présent
+      const msg = e?.message ?? 'Login échoué';
+      Alert.alert('Connexion', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.primary }]}>
+      <LinearGradient
+        style={styles.container}
+        colors={['rgba(0,208,255,0.3)', 'transparent']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      >
+        <View style={styles.middle}>
+          <View style={styles.logo}>
+            <BoatChainMainIcon width="100%" height="100%" color={theme.colors.textLight} />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>Bienvenue sur BoatChain</Text>
+            <Text style={styles.body}>Achetez, vendez et suivez des bateaux en toute confiance.</Text>
+          </View>
+        </View>
+
+        <View style={styles.bottomContainer}>
+          <View style={styles.bigTitleContainer}>
+            <Text style={styles.bigTitle}>Commençons !</Text>
+          </View>
+
+          {/* étape 1: ouvrir WalletConnect pour choisir le wallet */}
+          <Pressable style={styles.buttonsContainer} onPress={handleOpenWalletConnect}>
+            <Image source={require('@/assets/images/metamask.png')} style={styles.images} />
+            <Text style={styles.buttonsText}>Choisir un wallet</Text>
+          </Pressable>
+
+          {/* étape 2: signer le nonce et se connecter au backend */}
+          <Pressable style={styles.buttonsContainer} onPress={handleSignAndLogin}>
+            <Image source={require('@/assets/images/walletConnect.png')} style={styles.images} />
+            <Text style={styles.buttonsText}>Signer et continuer</Text>
+          </Pressable>
+
+          {/* aide visuelle optionnelle: adresse détectée après étape 1 */}
+          {address ? (
+            <Text style={{ marginTop: 8, color: theme.colors.textDark }}>
+              Adresse détectée: {address.slice(0, 6)}...{address.slice(-4)}
+            </Text>
+          ) : null}
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
