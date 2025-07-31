@@ -9,33 +9,38 @@ import {
     View,
 } from "react-native";
 import {useEffect, useState} from "react";
-import {Link} from "expo-router";
+import {Link, useNavigation} from "expo-router";
 import {useTheme} from "@/theme";
 import {BoatChainValidated} from "@/components/BoatChainValidated";
 import ScrollView = Animated.ScrollView;
 
 const Boat = () => {
     const theme = useTheme();
+    const navigation = useNavigation();
     const [boats, setBoats] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://192.168.2.10:5000/boats")
-            .then((res) => res.json())
-            .then((data) => {
-// transforme { "1.json": {...}, "2.json": {...} } en [{ id: "1.json", ... }, ...]
-                const boatsArray = Object.entries(data).map(([id, boat]) => ({
-                    id,
-                    ...boat,
-                }));
-                setBoats(boatsArray);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error("Erreur de chargement:", error);
-                setLoading(false);
-            });
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            setLoading(true);
+            fetch("http://192.168.2.10:5000/boats")
+                .then((res) => res.json())
+                .then((data) => {
+                    // transforme { "1.json": {...}, "2.json": {...} } en [{ id: "1.json", ... }, ...]
+                    const boatsArray = Object.entries(data).map(([id, boat]) => ({
+                        id,
+                        ...boat,
+                    }));
+                    setBoats(boatsArray);
+                    setLoading(false);
+                })
+                .catch((error) => {
+                    console.error("Erreur de chargement:", error);
+                    setLoading(false);
+                });
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const styles = StyleSheet.create({
         container: {
