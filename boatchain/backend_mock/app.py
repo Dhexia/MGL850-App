@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, send_from_directory, make_response
+from flask import Flask, jsonify, send_from_directory, make_response, request
 from flask_cors import CORS
 import os
 import json
+from uuid import uuid4
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -54,6 +55,26 @@ def get_attachment(id, attachment_name):
         return send_from_directory(os.path.dirname(attachment_path), os.path.basename(attachment_path))
     else:
         return jsonify({"error": "Attachment not found"}), 404
+
+@app.route('/save-boat', methods=['POST'])
+def save_json():
+    try:
+        # Vérifie que le corps de la requête contient du JSON
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Aucun JSON reçu'}), 400
+
+        file_name = str(uuid4()) + ".json"
+        file_path = os.path.join(JSON_FOLDER, file_name)
+
+        # Sauvegarde le JSON dans un fichier
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+        return jsonify({'message': 'JSON sauvegardé avec succès'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ const Boat = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://192.168.1.91:7001/boats")
+        fetch("http://192.168.2.10:5000/boats")
             .then((res) => res.json())
             .then((data) => {
 // transforme { "1.json": {...}, "2.json": {...} } en [{ id: "1.json", ... }, ...]

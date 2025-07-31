@@ -80,7 +80,8 @@ export class IndexerService {
         );
       }
     });
-
+    
+    // @ts-ignore
     /* ============== ERC-721 Transfer (BoatPassport) ================= */
     const passportAddress = this.cfg.get('BOAT_PASSPORT_ADDRESS')!;
     const erc721Iface = new ethers.Interface([

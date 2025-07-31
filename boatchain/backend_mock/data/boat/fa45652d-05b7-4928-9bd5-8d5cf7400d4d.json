@@ -1,0 +1,92 @@
+{
+    "specification": {
+        "price": 146000,
+        "title": "1. Selling Sun Odyssey 380",
+        "name": "Sun Odyssey 380",
+        "city": "La Rochelle",
+        "postal_code": "17000",
+        "year": 2020,
+        "overall_length": 13.0,
+        "width": 4.29,
+        "draft": 2.2,
+        "engine": "Yanmar 4JH57 - 57CV",
+        "fresh_water_capacity": 530,
+        "fuel_capacity": 200,
+        "cabins": 3,
+        "beds": 8,
+        "boat_type": "sailboat",
+        "navigation_category": "A - offshore navigation",
+        "description": "Le Sun Odyssey 440 est un voilier de croisière signé Jeanneau, conçu pour allier performance en mer et habitabilité à bord.\nGrâce à son pont en pente douce, la circulation est sécurisée et fluide du cockpit jusqu’à l’avant.\nSon design contemporain offre une belle luminosité intérieure, un carré spacieux, et plusieurs configurations de cabines. Parfait pour les navigations côtières comme hauturières, en famille ou entre amis.",
+        "summary": "Voilier moderne avec pont en circulation fluide et intérieur lumineux.",
+        "status": "validated"
+    },
+    "certificates": [
+        {
+            "person": "Maxime Dubois",
+            "date": "2025-03-17",
+            "title": "Expertise structurelle complète",
+            "expires": "2026-03-17",
+            "status": "validated",
+            "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
+            "attachments": [
+                {
+                    "title": "expertise_struct_mars25.pdf",
+                    "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+                }
+            ]
+        },
+        {
+            "person": "John Doe",
+            "date": "2024-03-17",
+            "title": "Expertise structurelle complète",
+            "expires": "2026-03-17",
+            "status": "validated",
+            "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
+            "attachments": [
+                {
+                    "title": "expertise_struct_mars25.pdf",
+                    "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "boatName": "Sun Odyssey 380",
+            "date": "2025-03-17",
+            "shortTitle": "Mécanique & Moteur",
+            "title": "Expertise structurelle complète",
+            "description": "L’ancien inverseur présentait des signes de patinage. Installation d’un modèle neuf compatible Yanmar.",
+            "attachments": [
+                {
+                    "title": "facture_inverseur_mars25.pdf",
+                    "uri": "http://192.168.2.10:5000/attachments/1/facture_inverseur_mars25.pdf"
+                }
+            ]
+        },
+        {
+            "boatName": "Sun Odyssey 380",
+            "date": "2025-03-17",
+            "shortTitle": "Mécanique & Moteur",
+            "title": "Expertise structurelle complète",
+            "description": "L’ancien inverseur présentait des signes de patinage. Installation d’un modèle neuf compatible Yanmar.",
+            "attachments": [
+                {
+                    "title": "facture_inverseur_mars25.pdf",
+                    "uri": "http://192.168.2.10:5000/attachments/1/facture_inverseur_mars25.pdf"
+                }
+            ]
+        }
+    ],
+    "images": [
+        {
+            "uri": "http://192.168.2.10:5000/images/1/1_001.jpg"
+        },
+        {
+            "uri": "http://192.168.2.10:5000/images/1/1_002.jpg"
+        },
+        {
+            "uri": "http://192.168.2.10:5000/images/1/1_003.jpg"
+        }
+    ]
+}

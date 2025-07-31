@@ -28,7 +28,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@pinata/sdk": "^2.1.0",
     "@supabase/supabase-js": "^2.50.2",
-    "ethers": "^6.14.4",
+    "ethers": "6.14.4",
     "ipfs-http-client": "^60.0.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
