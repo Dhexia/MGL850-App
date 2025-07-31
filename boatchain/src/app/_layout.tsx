@@ -8,12 +8,12 @@ import { ThemeProvider } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import InitApi from './InitApi';
 
-global.Buffer = Buffer;
-global.process = process;
-
-if (typeof global.Buffer === 'undefined') global.Buffer = Buffer;
-if (typeof global.process === 'undefined') global.process = process;
+// polyfills
+// (inutile de doubler les affectations — ici on les fixe une seule fois)
+if (typeof global.Buffer === 'undefined') (global as any).Buffer = Buffer;
+if (typeof global.process === 'undefined') (global as any).process = process;
 
 export default function RootLayout() {
   return (
@@ -21,6 +21,8 @@ export default function RootLayout() {
       <WalletProvider>
         <AuthProvider>
           <SafeAreaView style={{ flex: 1 }}>
+            {/* Initialise apiFetch (JWT + 401 handler) une seule fois */}
+            <InitApi />
             <Stack screenOptions={{ headerShown: false }} />
           </SafeAreaView>
         </AuthProvider>

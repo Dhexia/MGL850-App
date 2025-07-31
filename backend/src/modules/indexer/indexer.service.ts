@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
-import { ethers } from 'ethers';
+import { ethers, ZeroAddress } from 'ethers';
 
 @Injectable()
 export class IndexerService {
@@ -10,53 +11,130 @@ export class IndexerService {
   constructor(private cfg: ConfigService) {}
 
   async start() {
-    /* clients */
     const supa = createClient(
-      this.cfg.get('SUPABASE_URL'),
-      this.cfg.get('SUPABASE_SERVICE_KEY'),
+      this.cfg.get('SUPABASE_URL')!,
+      this.cfg.get('SUPABASE_SERVICE_KEY')!,
     );
     const provider = new ethers.WebSocketProvider(
-      this.cfg.get('WEBSOCKET_RPC'),
+      this.cfg.get('WEBSOCKET_RPC')!,
     );
 
-    /* bloc de reprise */
+    // point de reprise
     const { data } = await supa.from('cursor').select('last_block').single();
     let fromBlock = data?.last_block ?? (await provider.getBlockNumber());
     this.log.log(`Indexer starts at block ${fromBlock}`);
 
-    /* filtre event */
-    const iface = new ethers.Interface([
+    /* ============== BoatEventLogged (déjà présent) ================= */
+    const boatEventsIface = new ethers.Interface([
       'event BoatEventLogged(uint256,uint8,address,string)',
     ]);
-    const filter = {
-      address: this.cfg.get('BOAT_EVENTS_ADDRESS'),
-      topics: [iface.getEvent('BoatEventLogged').topicHash],
+    const boatEventsAddress = this.cfg.get('BOAT_EVENTS_ADDRESS')!;
+    const boatEventsFilter = {
+      address: boatEventsAddress,
+      topics: [boatEventsIface.getEvent('BoatEventLogged').topicHash],
       fromBlock,
     };
 
-    /* écoute */
-    provider.on(filter, async (raw) => {
-      const [boatId, kind, author, ipfsHash] = iface.parseLog(raw).args;
-      await supa.from('events').insert({
-        boat_id: boatId,
-        kind,
-        ts: new Date(raw.blockTimestamp * 1000),
-        author,
-        ipfs_hash: ipfsHash,
-        tx_hash: raw.transactionHash,
-        block_number: raw.blockNumber,
-      });
+    provider.on(boatEventsFilter, async (raw) => {
+      try {
+        const parsed = boatEventsIface.parseLog(raw);
+        const boatId = Number(parsed.args[0]);
+        const kind = Number(parsed.args[1]);
+        const author = (parsed.args[2] as string).toLowerCase();
+        const ipfsHash = parsed.args[3] as string;
 
-      /* maj curseur tous les 10 blocs */
-      if (raw.blockNumber - fromBlock >= 10) {
-        fromBlock = raw.blockNumber;
-        await supa.from('cursor').update({ last_block: fromBlock }).eq('id', 1);
+        // timestamp: fallback si non fourni
+        let tsMs: number;
+        // @ts-ignore: certains providers enrichissent le log
+        if (raw.blockTimestamp) {
+          // @ts-ignore
+          tsMs = Number(raw.blockTimestamp) * 1000;
+        } else {
+          const blk = await provider.getBlock(raw.blockNumber);
+          tsMs = Number(blk?.timestamp ?? Date.now() / 1000) * 1000;
+        }
+
+        await supa.from('events').insert({
+          boat_id: boatId,
+          kind,
+          ts: new Date(tsMs),
+          author,
+          ipfs_hash: ipfsHash,
+          tx_hash: raw.transactionHash,
+          block_number: raw.blockNumber,
+        });
+
+        if (raw.blockNumber - fromBlock >= 10) {
+          fromBlock = raw.blockNumber;
+          await supa
+            .from('cursor')
+            .update({ last_block: fromBlock })
+            .eq('id', 1);
+        }
+        this.log.verbose(
+          `Boat ${boatId} – kind ${kind} – block ${raw.blockNumber}`,
+        );
+      } catch (e) {
+        this.log.warn(
+          `BoatEventLogged parse/insert error: ${(e as Error).message}`,
+        );
       }
-      this.log.verbose(
-        `Boat ${boatId} – kind ${kind} – block ${raw.blockNumber}`,
-      );
     });
 
+    /* ============== ERC-721 Transfer (BoatPassport) ================= */
+    const passportAddress = this.cfg.get('BOAT_PASSPORT_ADDRESS')!;
+    const erc721Iface = new ethers.Interface([
+      'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+      'function tokenURI(uint256) view returns (string)',
+    ]);
+    const tfTopic = erc721Iface.getEvent('Transfer').topicHash;
+
+    provider.on(
+      { address: passportAddress, topics: [tfTopic] },
+      async (raw) => {
+        try {
+          const parsed = erc721Iface.parseLog(raw);
+          const from = (parsed.args[0] as string).toLowerCase();
+          const to = (parsed.args[1] as string).toLowerCase();
+          const tokenId = parsed.args[2].toString();
+
+          // tokenURI au mint (optionnel) — on essaie, mais on ignore l’erreur
+          let tokenUri: string | null = null;
+          if (from === ZeroAddress) {
+            try {
+              const read = new ethers.Contract(
+                passportAddress,
+                erc721Iface,
+                provider,
+              );
+              tokenUri = await read.tokenURI(tokenId);
+            } catch {}
+          }
+
+          // upsert dans boats
+          await supa.from('boats').upsert(
+            {
+              id: Number(tokenId),
+              owner: to,
+              token_uri: tokenUri ?? undefined,
+              minted_at: new Date(), // au premier mint, c’est approximatif si block ts non fetché
+              block_number: raw.blockNumber,
+              tx_hash: raw.transactionHash,
+            },
+            { onConflict: 'id' },
+          );
+
+          this.log.verbose(
+            `Transfer ${from === ZeroAddress ? 'MINT' : 'MOVE'} #${tokenId} → ${to} (block ${raw.blockNumber})`,
+          );
+        } catch (e) {
+          this.log.warn(`Transfer parse/upsert error: ${(e as Error).message}`);
+        }
+      },
+    );
+
+    // Reconnexion WS simple
+    // @ts-ignore: propriété spécifique de la lib ws sous-jacente
     provider.websocket.onclose = () => {
       this.log.warn('WS closed, reconnecting in 5 s');
       setTimeout(() => this.start(), 5_000);

@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx — nonce login body (front patch)
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
@@ -26,13 +25,16 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const { address, requestAccounts, getSelectedAddress, personalSign, disconnect } = useWallet();
   const [jwt, setJwt] = useState<string>();
 
+  // IMPORTANT: on n'essaie plus de restaurer un JWT persisté.
+  // À chaque relance (nouvelle exécution JS), on efface le token stocké → l'app
+  // n'est "connectée" qu'après une nouvelle signature.
   useEffect(() => {
     (async () => {
-      const token = await SecureStore.getItemAsync('jwt');
-      if (token) {
-        setJwt(token);
-        log('restored jwt.len=', token.length);
-      }
+      try {
+        await SecureStore.deleteItemAsync('jwt');
+        setJwt(undefined);
+        log('force relogin on boot: cleared stored jwt');
+      } catch {}
     })();
   }, []);
 
@@ -43,7 +45,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     log('login start, chosen addr=', addr);
     if (!addr) throw new Error('Wallet non connecté');
 
-    // 2) Récupère un nonce (lié à la session, pas à l'adresse côté back)
+    // 2) Récupère un nonce (hex string) côté back
     const r1 = await fetch(`${API}/auth/nonce?address=${addr}`);
     log('GET /auth/nonce status=', r1.status);
     if (!r1.ok) {
@@ -54,11 +56,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const { nonce } = await r1.json();
     log('nonce=', nonce);
 
-    // 3) Signature des octets du hex "0x..."
+    // 3) Signature des octets du hex fourni (WalletConnect/MetaMask OK)
     const signature = await personalSign(nonce);
     log('signature.len=', String(signature).length);
 
-    // 4) Login avec { nonce, signature } (on n'envoie plus address)
+    // 4) Login — si ton back attend encore { address, signature }, remets l'adresse ici.
     const r2 = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
