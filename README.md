@@ -146,3 +146,6 @@ WEBSOCKET_RPC=wss://eth-sepolia.g.alchemy.com/v2/<API_KEY_WS>
 ## 13 – Monitoring (optionnel)
 13.1 Alchemy Webhooks pour erreurs tx  
 13.2 Prometheus ou Grafana Loki pour latence API et taille events  
+
+
+127.0.0.1
