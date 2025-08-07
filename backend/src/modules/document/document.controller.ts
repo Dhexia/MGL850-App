@@ -35,4 +35,19 @@ export class DocumentController {
     const cid = await this.docs.upload(file.buffer);
     return this.boats.addEvent(id, kind, cid, req.user!.address);
   }
+
+  /**
+   * Upload JSON metadata to IPFS (for boat NFT creation)
+   */
+  @Post('upload-json')
+  async uploadJson(@Body() body: { boatData: any }) {
+    // Extract boat data from wrapper and upload only the boat data
+    const boatData = body.boatData;
+    if (!boatData) {
+      throw new Error('Missing boatData in request body');
+    }
+
+    const ipfsHash = await this.docs.uploadJson(boatData);
+    return { ipfsHash };
+  }
 }

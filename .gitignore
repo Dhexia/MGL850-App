@@ -5,3 +5,8 @@
 .vscode/
 .idea/
 
+# Claude Code et MCP
+.claude/
+.mcp.json
+CLAUDE.md
+

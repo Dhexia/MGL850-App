@@ -28,7 +28,9 @@ export default function Home() {
   const connected = Boolean(jwt);
 
   if (loading || booting) return <LoadingScreen />;
-  if (!connected) return <ConnectionScreen setLoading={setLoading} />;
+  
+  // TEMP: Skip connection screen for development
+  // if (!connected) return <ConnectionScreen setLoading={setLoading} />;
 
   return <Redirect href="/(tabs)" />;
 }

@@ -6,23 +6,41 @@ import {
   Body,
   Req,
   ParseIntPipe,
+  Logger,
 } from '@nestjs/common';
 import { BoatsService } from './boats.service';
 
 @Controller('boats')
 export class BoatsController {
+  private readonly logger = new Logger(BoatsController.name);
+
   constructor(private readonly boats: BoatsService) {}
 
   /** Liste de tous les bateaux indexés (via Supabase 'boats') */
   @Get()
   async list() {
-    return this.boats.listBoats();
+    const boats = await this.boats.listBoats();
+    this.logger.log(`📋 Listing ${boats.length} boats from database`);
+
+    // Log IPFS URIs for debugging
+    boats.forEach((boat) => {
+      if (boat.tokenURI) {
+        this.logger.verbose(`🔗 Boat #${boat.id}: IPFS URI = ${boat.tokenURI}`);
+      }
+    });
+
+    return boats;
   }
 
   /** Fiche d'un bateau : owner + tokenURI (+ champs DB si présents) */
   @Get(':id')
   async getOne(@Param('id', ParseIntPipe) id: number) {
-    return this.boats.getBoat(id);
+    const boat = await this.boats.getBoat(id);
+    this.logger.log(`🛥️  Fetching boat #${id} details`);
+    if (boat.tokenURI) {
+      this.logger.verbose(`🔗 Boat #${id} IPFS URI: ${boat.tokenURI}`);
+    }
+    return boat;
   }
 
   /** Timeline complète d'un bateau */

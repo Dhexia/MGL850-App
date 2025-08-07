@@ -47,4 +47,23 @@ export class DocumentService {
       throw new InternalServerErrorException('Upload IPFS échoué');
     }
   }
+
+  async uploadJson(jsonData: any): Promise<string> {
+    try {
+      this.logger.log('Uploading JSON to IPFS...');
+      
+      // Convert JSON to Buffer and upload as file
+      const jsonBuffer = Buffer.from(JSON.stringify(jsonData, null, 2));
+      const file = new NodeFile([jsonBuffer], 'metadata.json', {
+        type: 'application/json',
+      });
+      
+      const result = await this.pinata.upload.public.file(file);
+      this.logger.log(`JSON uploaded to IPFS: ${result.cid}`);
+      return result.cid;
+    } catch (error) {
+      this.logger.error('Pinata JSON upload failed', error as Error);
+      throw new InternalServerErrorException('Upload JSON IPFS échoué');
+    }
+  }
 }

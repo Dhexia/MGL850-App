@@ -14,18 +14,22 @@ import { useTheme } from '@/theme';
 import { BoatChainValidated } from '@/components/BoatChainValidated';
 import * as React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { fetchBoatsFromBackend } from '@/lib/boats.api';
+import { fetchBoatsFromBackend, clearBoatsCache } from '@/lib/boats.api';
+import type { UIBoat } from '@/lib/boat.types';
 
 import ScrollView = Animated.ScrollView;
 
 const Boat = () => {
   const theme = useTheme();
-  const [boats, setBoats] = useState<any[]>([]);
+  const [boats, setBoats] = useState<UIBoat[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = React.useCallback(async () => {
+  const fetchAll = React.useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true);
+      if (forceRefresh) {
+        await clearBoatsCache();
+      }
       const list = await fetchBoatsFromBackend();
       setBoats(list);
     } catch (e) {
@@ -35,17 +39,12 @@ const Boat = () => {
     }
   }, []);
 
-  // recharge à chaque fois que l’onglet « Bateaux » devient actif
+  // recharge à chaque fois que l'onglet « Bateaux » devient actif
   useFocusEffect(
     React.useCallback(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      let alive = true;
       (async () => {
         await fetchAll();
       })();
-      return () => {
-        alive = false;
-      };
     }, [fetchAll])
   );
 
@@ -57,9 +56,26 @@ const Boat = () => {
       width: '100%',
       flexDirection: 'column',
     },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 10,
+    },
     title: {
       ...theme.textStyles.titleMedium,
-      marginBottom: 10,
+    },
+    refreshButton: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    refreshText: {
+      ...theme.textStyles.bodySmall,
+      color: theme.colors.background,
+      fontWeight: '600',
     },
     text: {
       fontSize: 20,
@@ -96,6 +112,16 @@ const Boat = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Bateaux</Text>
+        <Pressable 
+          style={styles.refreshButton} 
+          onPress={() => fetchAll(true)}
+          disabled={loading}
+        >
+          <Text style={styles.refreshText}>↻ Actualiser</Text>
+        </Pressable>
+      </View>
       <ScrollView contentContainerStyle={styles.tiles}>
         {boats.map((boat) => (
           <BoatTile key={boat.id} boat={boat} />
@@ -107,7 +133,7 @@ const Boat = () => {
 
 export default Boat;
 
-const BoatTile = ({ boat }: { boat: any }) => {
+const BoatTile = ({ boat }: { boat: UIBoat }) => {
   const theme = useTheme();
   const { specification, images, certificates, events } = boat;
   const mainImage = images?.[0]?.uri;
@@ -219,8 +245,8 @@ const BoatTile = ({ boat }: { boat: any }) => {
             </Text>
             <Text
               style={{
-                ...useTheme().textStyles.bodyMedium,
-                color: useTheme().colors.textDark,
+                ...theme.textStyles.bodyMedium,
+                color: theme.colors.textDark,
               }}
             >
               {specification?.city ?? ''}{specification?.postal_code ? `, ${specification.postal_code}` : ''}

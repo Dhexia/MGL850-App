@@ -89,6 +89,87 @@ export class IndexerService {
     ]);
     const tfTopic = erc721Iface.getEvent('Transfer').topicHash;
 
+    // ÉTAPE 1: Rattraper les anciens événements Transfer
+    this.log.log(`Catching up Transfer events from block ${fromBlock}...`);
+    const transferContract = new ethers.Contract(
+      passportAddress,
+      erc721Iface,
+      provider,
+    );
+
+    // Traitement par batch de 400 blocs pour éviter la limite RPC de 500 blocs
+    const currentBlock = await provider.getBlockNumber();
+    const BATCH_SIZE = 400;
+    const oldEvents = [];
+
+    for (let start = fromBlock; start <= currentBlock; start += BATCH_SIZE) {
+      const end = Math.min(start + BATCH_SIZE - 1, currentBlock);
+      this.log.verbose(
+        `Processing Transfer events from block ${start} to ${end}`,
+      );
+
+      try {
+        const batchEvents = await transferContract.queryFilter(
+          transferContract.filters.Transfer(),
+          start,
+          end,
+        );
+        oldEvents.push(...batchEvents);
+      } catch (error) {
+        this.log.warn(
+          `Failed to fetch Transfer events for blocks ${start}-${end}: ${error.message}`,
+        );
+      }
+    }
+
+    this.log.log(`Found ${oldEvents.length} Transfer events to process`);
+
+    for (const event of oldEvents) {
+      try {
+        if (!('args' in event)) continue; // Skip non-EventLog entries
+        const from = (event.args[0] as string).toLowerCase();
+        const to = (event.args[1] as string).toLowerCase();
+        const tokenId = event.args[2].toString();
+
+        // tokenURI au mint
+        let tokenUri: string | null = null;
+        if (from === ZeroAddress) {
+          try {
+            tokenUri = await transferContract.tokenURI(tokenId);
+          } catch {}
+        }
+
+        // upsert dans boats
+        await supa.from('boats').upsert(
+          {
+            id: Number(tokenId),
+            owner: to,
+            token_uri: tokenUri ?? undefined,
+            minted_at: new Date(),
+            block_number: event.blockNumber,
+            tx_hash: event.transactionHash,
+          },
+          { onConflict: 'id' },
+        );
+
+        this.log.verbose(
+          `Transfer ${from === ZeroAddress ? 'MINT' : 'MOVE'} #${tokenId} → ${to} (block ${event.blockNumber})`,
+        );
+
+        // Update cursor every 10 events
+        if (event.blockNumber - fromBlock >= 10) {
+          fromBlock = event.blockNumber;
+          await supa
+            .from('cursor')
+            .update({ last_block: fromBlock })
+            .eq('id', 1);
+        }
+      } catch (e) {
+        this.log.warn(`Transfer catchup error: ${(e as Error).message}`);
+      }
+    }
+
+    // ÉTAPE 2: Écouter les nouveaux événements en temps réel
     provider.on(
       { address: passportAddress, topics: [tfTopic] },
       async (raw) => {
@@ -98,7 +179,7 @@ export class IndexerService {
           const to = (parsed.args[1] as string).toLowerCase();
           const tokenId = parsed.args[2].toString();
 
-          // tokenURI au mint (optionnel) — on essaie, mais on ignore l’erreur
+          // tokenURI au mint
           let tokenUri: string | null = null;
           if (from === ZeroAddress) {
             try {
@@ -117,7 +198,7 @@ export class IndexerService {
               id: Number(tokenId),
               owner: to,
               token_uri: tokenUri ?? undefined,
-              minted_at: new Date(), // au premier mint, c’est approximatif si block ts non fetché
+              minted_at: new Date(),
               block_number: raw.blockNumber,
               tx_hash: raw.transactionHash,
             },
