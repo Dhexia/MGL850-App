@@ -83,12 +83,9 @@ contract BoatEvents {
                 "Only certified pro"
             );
         } else if (kind == EventKind.Incident) {
-            bool isOwner   = passport.ownerOf(boatId) == msg.sender;
-            bool isInsurer = roles.hasRole(
-                roles.INSURER_ROLE(),
-                msg.sender
-            );
-            require(isOwner || isInsurer, "Not allowed");
+            bool isOwner = passport.ownerOf(boatId) == msg.sender;
+            // Seuls les propriétaires peuvent déclarer des incidents
+            require(isOwner, "Only owner can log incidents");
         } else if (kind == EventKind.Sale) {
             require(
                 passport.ownerOf(boatId) == msg.sender,

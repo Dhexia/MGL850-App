@@ -1,148 +1,248 @@
-# Mise en place du projet
+# BoatChain - DApp de gestion, achat et vente de bateaux
 
-Dans chaque repository, il faudra lancer la commande `npm install` pour installer les dépendances.
+BoatChain est une application décentralisée (DApp) basée sur la blockchain Ethereum qui permet la gestion, l'achat et la vente de bateaux avec un système de passeports numériques et de traçabilité complète.
 
-Dans le repository boatchain-contracts, il faudra également lancer la commande `npx hardhat compile` pour compiler les contrats. Pour les tests, il faudra lancer la commande `npx hardhat test`. Le dossier ignition contient les modules de déploiement des contrats. Il renvoie les adresses des contrats déployés dans le fichier `ignition/deployments/{chain}/deployed_addresses.json`. Ce fichier évite à l'équipe backend et frontend de devoir récupérer les adresses des contrats déployés manuellement.
+## Architecture du projet
 
-À chaque fois qu'un contrat est modifié, il faut recompiler les contrats et redéployer les modules de déploiement. Il faudra également mettre à jour le fichier `ignition/deployments/{chain}/deployed_addresses.json` pour que l'équipe backend et frontend puisse récupérer les nouvelles adresses des contrats avec la commande `npx hardhat ignition`. 
+### 🏗️ Structure des composants
 
-Si le temps le permet, on pourrait même héberger les contrats dans un package privé npm pour faciliter la gestion des versions et des dépendances. Cela permettrait à l'équipe backend et frontend de récupérer les contrats directement depuis le package npm sans avoir à se soucier de la compilation et du déploiement. Mais cela nécessiterait une configuration supplémentaire et un peu plus de temps pour mettre en place.
-Mais pour le moment on récupère les dossier typechain et les adresses des contrats déployés dans le dossier `ignition/deployments/{chain}/deployed_addresses.json` pour que l'équipe backend et frontend puisse les utiliser. (J'ai copié le dossier typechain-types dans le repository backend pour que l'équipe backend puisse l'utiliser directement.)
+1. **boatchain-contracts/** - Smart contracts Solidity avec Hardhat
+2. **backend/** - API NestJS avec intégration blockchain  
+3. **boatchain/** - Application mobile React Native/Expo
 
-La monnaie de test utilisée est l'ETH sur le réseau de test Sepolia. Créez un compte sur le réseau de test Sepolia et récupérez des ETH de test via un faucet. Vous pouvez utiliser le compte créé pour déployer les contrats et interagir avec eux. (Il faudra instancier un .env avec les variables d'environnement nécessaires pour se connecter au réseau Sepolia, comme la clé privée du compte et l'URL du fournisseur de nœud Ethereum, par exemple Infura ou Alchemy.)
+### 📋 Smart Contracts déployés
 
-
-Le fichier chain.service.ts du backend correspond à la configuration de l'Adapter Web3.
-
-
-
-Je vous donne aussi les étapes que j'ai suivi pour mettre en place le projet. 
-Il faut savoir que par exemple, dans certains contrats notamment celui pour les events et les rôles, j'ai pas pris en compte TOUS les rôles et TOUS les events. On pourra les améliorer par la suite.
-
-
-# BoatChain — État actuel du back‑end (25 juin 2025)
-
-## Fonctionnalités déjà opérationnelles
-
-| Domaine              | Module / Contrat                             | Description                                                                        |
-| -------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Blockchain**       | `BoatPassport`, `RoleRegistry`, `BoatEvents` | Contrats déployés sur Sépolia via Ignition (reproductible).                        |
-| **Web3 adapter**     | `ChainModule`                                | Lecture et écriture on‑chain (provider + signer).                                  |
-| **Gestion bateaux**  | `BoatsModule`                                | Endpoints `mint` et `add‑event` ; contrôle des rôles on‑chain.                     |
-| **Authentification** | `AuthModule`                                 | Login par signature (nonce → JWT) ; `JwtAuthGuard` global protège tous les `POST`. |
-| **Documents**        | `DocumentsModule`                            | Upload fichier → Pinata → renvoie `ipfs://CID`.                                    |
-| **Indexer**          | `IndexerModule` + Supabase                   | WebSocket Sépolia → table `events` ; lecture SQL prioritaire, fallback on‑chain.   |
+| Contrat | Description | Fonctionnalités |
+|---------|-------------|-----------------|
+| **BoatPassport** | ERC721 pour passeports bateaux | NFT propriété, métadonnées IPFS |
+| **BoatEvents** | Historique événements | Réparations, inspections, ventes |
+| **RoleRegistry** | Gestion des rôles | Certification des certificateurs |
 
 ---
 
-## Routes vérifiées (Postman)
+## 🔐 Système de rôles et validation
 
-| Méthode / URL                        | Corps (Body)                               | Headers                       | Réponse attendue                                      |
-| ------------------------------------ | ------------------------------------------ | ----------------------------- | ----------------------------------------------------- |
-| **GET**  `/auth/nonce?address=0x…`   | –                                          | –                             | `{ "nonce": "<hex>" }` (200)                          |
-| **POST** `/auth/login`               | `{ "address": "0x…", "signature": "0x…" }` | –                             | `{ "token": "<JWT>" }` (201)                          |
-| **POST** `/boats`                    | `{ "to": "0x…", "uri": "ipfs://…" }`       | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
-| **POST** `/boats/1/events`           | `{ "kind": 1, "ipfsHash": "ipfs://CID" }`  | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…" }` (201)                           |
-| **POST** `/documents/boats/1/events` | *multipart* : champ `file`, champ `kind`   | `Authorization: Bearer <JWT>` | `{ "txHash": "0x…", "ipfsHash": "ipfs://CID" }` (201) |
-| **GET**  `/boats/1/events`           | –                                          | –                             | Tableau d’événements (lecture Supabase, 200)          |
+### Rôles disponibles
 
-> **Procédure Postman**
->
-> 1. `GET /auth/nonce`, signer le nonce dans MetaMask, puis `POST /auth/login`.
-> 2. Dans chaque requête `POST`, onglet *Authorization* → type **Bearer Token** → coller le JWT.
-> 3. Après un `POST`, attendre \~15 s (Sépolia) puis interroger `GET /boats/:id/events` : l’événement apparaît.
+1. **Utilisateur Standard** (vendeur/acheteur/propriétaire)
+   - **Détection** : Aucun rôle spécial on-chain
+   - **Permissions** : Gérer ses propres bateaux, déposer documents
+   - **Workflow** : Soumet documents → statut "pending" → attend validation
+
+2. **Certificateur** (PROFESSIONAL_ROLE)
+   - **Détection** : Possède le rôle PROFESSIONAL_ROLE on-chain + certification IPFS
+   - **Permissions** : Valider/rejeter événements, révoquer certifications
+   - **Workflow** : Reçoit notifications → examine documents → valide ou rejette
+
+### Workflow de validation
+
+1. **Utilisateur** dépose document (réparation, incident, expertise) → statut `pending`
+2. **Certificateur** reçoit notification pour examen
+3. **Validation** : document approuvé → statut `validated` → visible publiquement
+4. **Rejet** : document non conforme → statut `rejected` → masqué
+
+### Contrôles d'accès on-chain
+
+| Action | Utilisateur Standard | Certificateur |
+|--------|---------------------|---------------|
+| Créer bateau | ✅ | ❌ |
+| Modifier bateau | ✅ (propriétaire) | ❌ |
+| Event Sale | ✅ (propriétaire) | ❌ |
+| Event Repair/Inspection | 📤 Dépôt (pending) | ✅ Validation |
+| Event Incident | ✅ (propriétaire) | ❌ |
+| Valider documents | ❌ | ✅ |
 
 ---
 
-## Variables d’environnement
+## 🌐 API Backend (NestJS)
 
+### Routes d'authentification
+```
+GET  /auth/nonce?address=0x...     → { "nonce": "<hex>" }
+POST /auth/login                   → { "token": "<JWT>" }
+GET  /auth/profile                 → { "address": "0x...", "role": "standard_user|certifier" }
+```
+
+### Routes bateaux
+```
+GET  /boats                        → Liste tous les bateaux
+GET  /boats/:id                    → Détails d'un bateau
+GET  /boats/:id/events             → Historique événements bateau
+POST /boats                        → Créer nouveau bateau (mint NFT)
+POST /boats/:id/events             → Ajouter événement
+POST /boats/upload/images          → Upload images vers IPFS
+```
+
+### Routes documents
+```
+POST /documents/boats/:id/events   → Upload document + créer événement
+POST /documents/upload-json        → Upload JSON vers IPFS
+```
+
+### Sécurité et authentification
+- **JWT** requis pour tous les `POST`
+- **Signature wallet** pour authentification (nonce)
+- **Contrôles de rôles** on-chain pour actions sensibles
+
+---
+
+## 📱 Frontend Mobile (React Native/Expo)
+
+### Stack technique
+- **React Native / Expo** - Cross-platform mobile
+- **WalletConnect** - Connexion wallets Web3
+- **Expo Router** - Navigation file-based
+- **TypeScript** - Typage statique
+
+### Composants développés
+
+| Composant | Statut | Description |
+|-----------|--------|-------------|
+| **WalletContext** | ✅ | Gestion connexion wallet |
+| **AuthContext** | ✅ | JWT + session utilisateur |
+| **BoatDetailScreen** | ✅ | Vue détaillée bateau |
+| **NewBoatScreen** | ✅ | Formulaire création bateau |
+| **ImageCarousel** | ✅ | Galerie d'images |
+| **ImagePicker** | ✅ | Sélection photos/documents |
+| **Boat Components** | ✅ | Sections modulaires UI |
+
+### Écrans disponibles
+
+| Écran | Statut | Features |
+|-------|--------|----------|
+| **Dashboard** | ✅ | Liste bateaux, navigation |
+| **Boat Detail** | ✅ | Infos, événements, certificats |
+| **New Boat** | ✅ | Création + upload images |
+| **Chat** | 🚧 | Messaging (en développement) |
+| **Resources** | ✅ | FAQ, lexique, support |
+
+### APIs intégrées
+
+- ✅ **boats.api** - CRUD bateaux, mint passeports
+- ✅ **events.api** - Gestion événements
+- ✅ **ipfs.api** - Upload documents IPFS
+- ✅ **transformers** - Données UI
+
+---
+
+## 🔧 Configuration et déploiement
+
+### Variables d'environnement Backend
 ```env
-# RPC Sépolia
+# Blockchain
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/<API_KEY>
-PRIVATE_KEY=0x<clé_privée_wallet>
+WEBSOCKET_RPC=wss://eth-sepolia.g.alchemy.com/v2/<API_KEY>
+PRIVATE_KEY=0x<wallet_private_key>
 
-# Adresses contrats
-BOAT_PASSPORT_ADDRESS=0x…
-BOAT_EVENTS_ADDRESS=0x…
-ROLE_REGISTRY_ADDRESS=0x…
+# Contrats (Sepolia)
+BOAT_PASSPORT_ADDRESS=0x...
+BOAT_EVENTS_ADDRESS=0x...
+ROLE_REGISTRY_ADDRESS=0x...
 
-# Auth
-JWT_SECRET=<chaîne_random_32_bytes>
+# Authentification
+JWT_SECRET=<random_32_bytes>
 
-# Pinata
-PINATA_JWT=<scoped_jwt>
+# IPFS
+PINATA_JWT=<scoped_jwt_token>
 
-# Supabase (indexer)
-SUPABASE_URL=https://<proj>.supabase.co
+# Base de données
+SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_SERVICE_KEY=<service_role_key>
-WEBSOCKET_RPC=wss://eth-sepolia.g.alchemy.com/v2/<API_KEY_WS>
+```
+
+### Commandes de développement
+
+#### Smart Contracts
+```bash
+cd boatchain-contracts
+npm install
+npx hardhat compile         # Compilation + génération types
+npx hardhat test           # Tests unitaires
+npx hardhat ignition       # Déploiement Sepolia
+```
+
+#### Backend  
+```bash
+cd backend
+npm install
+npm run start:dev          # Serveur de développement
+npm run build             # Build production
+npm run test              # Tests unitaires
+```
+
+#### Frontend Mobile
+```bash
+cd boatchain
+npm install
+npm start                 # Serveur Expo
+npm run android           # Android
+npm run ios              # iOS
+npm run web              # Version web
 ```
 
 ---
 
-## Prochaine étape : **Tests Postman automatisés**
+## 🧪 Tests et validation
 
-1. Créer une collection Postman « BoatChain ».
-2. Ajouter chaque requête ci‑dessus avec tests de statut HTTP et présence de `txHash` / `ipfsHash`.
-3. Récupérer le JWT comme variable d’environnement Postman après `auth/login`.
-4. Exécuter la collection en CI ( Newman ) pour valider chaque déploiement.
+### Backend testé (Postman)
+1. ✅ Authentification wallet (nonce → signature → JWT)
+2. ✅ Création bateaux avec mint NFT
+3. ✅ Ajout événements avec contrôles de rôles
+4. ✅ Upload documents IPFS + événements
+5. ✅ Lecture événements depuis indexer PostgreSQL
 
+### Indexer temps réel
+- ✅ WebSocket Sepolia → événements en base
+- ✅ Lecture prioritaire PostgreSQL (≈15s latence)
+- ✅ Fallback on-chain si données manquantes
 
-# Roadmap du projet BoatChain
+---
 
-## 1 – Définir les contrats ✅
-1.1 Écrire BoatPassport, RoleRegistry, BoatEvents  
-1.2 Compiler et tester localement avec Hardhat  
-1.3 Corriger supportsInterface et déployer sur Sepolia avec Ignition  
+## 🗺️ Roadmap de développement
 
-## 2 – Initialiser le dépôt backend NestJS ✅
-2.1 npx nest new boatchain-backend  
-2.2 Créer ChainModule pour la connexion Web3  
-2.3 Injecter RPC_URL et les adresses des contrats via .env  
+### ✅ Phase 1 - Fondations (Terminé)
+- Smart contracts déployés sur Sepolia
+- Backend NestJS avec Web3 + authentification
+- Frontend mobile avec WalletConnect
+- Upload IPFS et indexation événements
 
-## 3 – Lire la chaîne ✅
-3.1 Ajouter getHistory, boatExists dans ChainService  
-3.2 BoatsModule : GET /boats/:id/events retourne un tableau  
+### 🚧 Phase 2 - Finalisation (En cours)
+- **Interface rôles** : Adaptation UI selon certificateur/vendeur
+- **Validation certificats** : Interface certificateur
+- **Amélioration UX** : Loading, error handling
+- **Tests e2e** : Collection Postman automatisée
 
-## 4 – Frapper un premier passeport (Pour tester la route GET /boats/:id/events) ✅
-4.1 Hardhat console → passport.mint(owner, "ipfs://example")  
-4.2 Vérifier ownerOf(1) et la route GET qui renvoie []  
+### 📋 Phase 3 - Production (Planifié)
+- **Tests complets** : Unitaires + intégration
+- **Optimisations** : Performance, sécurité
+- **Déploiement mainnet** : Migration Ethereum
+- **CI/CD** : Pipelines automatisés
+- **Monitoring** : Métriques et alertes
 
-## 5 – Écriture on-chain ✅
-5.1 Ajouter signer, mintPassport, addEventTx dans ChainService  
-5.2 Exposer POST /boats et POST /boats/:id/events  
-5.3 Vérifier en Postman que les transactions partent  
+---
 
-## 6 – Authentification wallet ✅
-6.1 AuthModule : GET /auth/nonce, POST /auth/login -> JWT  
-6.2 JwtAuthGuard global : protège uniquement les POST  
+## 🎯 État actuel et prochaines étapes
 
-## 7 – Contrôles métier ✅
-7.1 BoatsService.addEvent vérifie owner, assureur, professionnel  
-7.2 Rejette 403 si rôle manquant  
+### ✅ Fonctionnalités opérationnelles
+- Authentification wallet → JWT
+- Mint passeports bateaux (NFT ERC721)
+- Ajout événements avec contrôles de rôles
+- Upload documents/images → IPFS
+- Historique temps réel via indexer PostgreSQL
+- Interface mobile complète
 
-## 8 – Upload IPFS ✅
-8.1 DocumentModule reçoit un fichier, pousse sur IPFS, récupère le CID  
-8.2 Appelle addEvent avec le hash IPFS  
+### 🔄 En développement
+- Gestion des rôles dans l'interface utilisateur
+- Interface spécialisée pour certificateurs
+- Validation et attestation de certificats
+- Tests automatisés complets
 
-## 9 – Indexer PostgreSQL (option performance) ✅
-9.1 Worker WebSocket écoute BoatEventLogged  
-9.2 INSERT boat_id, kind, timestamp, ipfs_hash dans la table events  
-9.3 BoatsService lit la base avant la chaîne
+### 📅 Priorités immédiates
+1. **GET /auth/profile** - Détection rôle utilisateur
+2. **Interface conditionnelle** - UI selon rôle (vendeur vs certificateur)
+3. **Tests e2e** - Validation complète du workflow
+4. **Optimisation UX** - États de chargement et gestion d'erreurs
 
-## 10 – Frontend minimal
-10.1 React + wagmi Connect Wallet  
-10.2 Page bateau : GET events, formulaire upload → POST events  
+---
 
-## 11 – Tests end-to-end
-11.1 Jest Supertest côté backend (mock ChainService)  
-11.2 Playwright côté frontend  
-
-## 12 – CI / CD
-12.1 Workflow backend : lint, tests, Docker push, deploy staging  
-12.2 Workflow contrats : compile, Ignition deploy, publier ABI  
-12.3 Workflow frontend : lint, tests, build, CDN deploy  
-
-## 13 – Monitoring (optionnel)
-13.1 Alchemy Webhooks pour erreurs tx  
-13.2 Prometheus ou Grafana Loki pour latence API et taille events  
+*BoatChain révolutionne la traçabilité maritime avec la blockchain - Première DApp complète de gestion de bateaux avec passeports numériques NFT.*

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -11,12 +11,13 @@ import {
 } from "react-native";
 import { useTheme } from "@/theme";
 import HeaderWithTitle from "@/components/HeaderWithTitle";
+import ImagePickerComponent from "@/components/ImagePicker";
 
 import { useForm, FormProvider } from "react-hook-form";
 import TextField from "@/components/forms/TextField";
 import SelectField from "@/components/forms/SelectField";
 import { useAuth } from "@/contexts/AuthContext";
-import { mintPassport, uploadBoatDataToIPFS, formDataToIPFSData } from "@/lib/boats.api";
+import { mintPassport, uploadBoatDataToIPFS, formDataToIPFSData, uploadImages } from "@/lib/boats.api";
 import type { NewBoatFormData } from "@/lib/boat.types";
 
 // Utiliser le DTO typé
@@ -26,6 +27,7 @@ export default function NewBoat() {
   const theme = useTheme();
   const { address, jwt, login } = useAuth() as any;
   const currentYear = new Date().getFullYear();
+  const [selectedImages, setSelectedImages] = useState<Array<{ uri: string; name: string }>>([]);
 
   /* ---------- RHF ---------- */
   const methods = useForm<FormData>({
@@ -60,16 +62,25 @@ export default function NewBoat() {
     }
 
     try {
-      // 1. Convertir form data → structure IPFS avec DTO
-      const boatData = formDataToIPFSData(data);
+      // 1. Upload des images vers Cloudinary
+      let imageUrls: string[] = [];
+      if (selectedImages.length > 0) {
+        console.log('[mint] Uploading images to Cloudinary...');
+        const uploadedImages = await uploadImages(selectedImages);
+        imageUrls = uploadedImages.images.map(img => img.url);
+        console.log('[mint] Images uploaded:', imageUrls);
+      }
 
-      // 2. Upload la structure complète vers IPFS
+      // 2. Convertir form data → structure IPFS avec DTO (inclure les URLs d'images)
+      const boatData = formDataToIPFSData(data, imageUrls);
+
+      // 3. Upload la structure complète vers IPFS
       console.log('[mint] Uploading boat data to IPFS...', boatData);
       const { ipfsHash } = await uploadBoatDataToIPFS(boatData);
       const uri = `ipfs://${ipfsHash}`;
       console.log('[mint] IPFS uploaded, uri=', uri);
 
-      // 2. Mint NFT with real IPFS URI
+      // 4. Mint NFT with real IPFS URI
       console.log('[mint] POST /boats to=', address, 'uri=', uri);
       const res = await mintPassport(address, uri);
       console.log('[mint] OK res=', res);
@@ -82,6 +93,7 @@ export default function NewBoat() {
         boat_type: 'sailboat',
         navigation_category: 'C - inshore navigation',
       });
+      setSelectedImages([]);
     } catch (e: any) {
       console.log('[mint] ERR', e);
       Alert.alert('Erreur mint', e?.message ?? String(e));
@@ -151,6 +163,13 @@ export default function NewBoat() {
         </Pressable>
 
         <ScrollView style={styles.content}>
+          <View style={styles.fieldsGroup}>
+            <ImagePickerComponent 
+              onImagesChange={setSelectedImages}
+              maxImages={5}
+            />
+          </View>
+
           <View style={styles.fieldsGroup}>
             <Text style={styles.title}>Information générales</Text>
             <TextField

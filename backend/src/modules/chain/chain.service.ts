@@ -79,9 +79,15 @@ export class ChainService {
     return (await this.getOwner(boatId)).toLowerCase() === caller.toLowerCase();
   }
 
-  async isInsurer(caller: string) {
-    const role = await this.roleRegistry.INSURER_ROLE();
-    return this.roleRegistry.hasRole(role, caller);
+  async isStandardUser(caller: string) {
+    return this.roleRegistry.isStandardUser(caller);
+  }
+
+  async getUserRole(caller: string): Promise<'standard_user' | 'certifier'> {
+    if (await this.isCertifiedProfessional(caller)) {
+      return 'certifier';
+    }
+    return 'standard_user';
   }
 
   async tokenURI(boatId: number) {

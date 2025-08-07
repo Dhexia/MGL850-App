@@ -1,12 +1,16 @@
-// src/auth/auth.controller.ts
-import { Controller, Get, Query, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, Logger, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Public } from './public.decorator'; // si déjà en place
+import { Public } from './public.decorator';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { ChainService } from '../chain/chain.service';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly chain: ChainService,
+  ) {}
 
   @Public()
   @Get('nonce')
@@ -20,5 +24,23 @@ export class AuthController {
   login(@Body() body: { nonce: string; signature: string }) {
     this.logger.debug(`POST /auth/login sig.len=${body?.signature?.length}`);
     return this.auth.login(body.nonce, body.signature);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@Request() req: any) {
+    const address = req.user?.address;
+    if (!address) {
+      throw new Error('Address not found in JWT payload');
+    }
+    
+    const role = await this.chain.getUserRole(address);
+    const isVerified = role === 'certifier';
+    
+    return {
+      address,
+      role,
+      isVerified,
+    };
   }
 }

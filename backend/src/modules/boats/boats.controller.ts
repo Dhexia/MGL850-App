@@ -7,7 +7,10 @@ import {
   Req,
   ParseIntPipe,
   Logger,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { BoatsService } from './boats.service';
 
 @Controller('boats')
@@ -53,6 +56,13 @@ export class BoatsController {
   @Post()
   async mint(@Body() dto: { to: string; uri: string }) {
     return this.boats.mintPassport(dto.to, dto.uri);
+  }
+
+  /** Upload d'images pour un bateau */
+  @Post('upload/images')
+  @UseInterceptors(FilesInterceptor('images', 5))
+  async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
+    return this.boats.uploadImages(files);
   }
 
   /** Ajout d'un événement (authentifié) */

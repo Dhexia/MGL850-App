@@ -1,122 +1,130 @@
-import {useTheme} from "@/theme";
-import {useNavigation} from "@react-navigation/native";
-import {useRef, useState} from "react";
+import React, { useState, useRef } from 'react';
 import {
-    FlatList,
-    View,
-    StyleSheet,
-    ImageBackground,
-    Dimensions, useColorScheme, Platform
+  View,
+  Image,
+  Dimensions,
+  StyleSheet,
+  Text,
+  FlatList,
 } from 'react-native';
+import { useTheme } from '@/theme';
 
-export default function ImageCarousel() {
-    const data = [
-        {
-            id: 1,
-            uri: "http://192.168.2.10:5000/images/1/1_001.jpg"
-        },
-        {
-            id: 2,
-            uri: "http://192.168.2.10:5000/images/1/1_002.jpg"
-        },
-        {
-            id: 3,
-            uri: "http://192.168.2.10:5000/images/1/1_003.jpg"
-        }
-    ]
+interface ImageCarouselProps {
+  images: Array<{ uri: string; title?: string }>;
+}
 
-    const theme = useTheme();
-    const colorScheme = useColorScheme();
-    const navigation = useNavigation();
+const { width: screenWidth } = Dimensions.get('window');
 
-    const carouselRef = useRef<FlatList<{
-        id: number;
-        uri: string
-    }> | null>(null);
+export default function ImageCarousel({ images }: ImageCarouselProps) {
+  const theme = useTheme();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
-    const viewConfigRef = {viewAreaCoveragePercentThreshold: 95}
-    const [activeIndex, setActiveIndex] = useState<number>(0)
+  if (!images || images.length === 0) {
+    return null;
+  }
 
-    const onViewRef = useRef(({changed}) => {
-        if (changed[0].isViewable) {
-            setActiveIndex(changed[0].index);
-        }
-    });
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index || 0);
+    }
+  });
 
-    const height = Platform.OS === 'web' ? 400 : 9 / 16 * Dimensions.get("screen").width - 20
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  });
 
-    const styles = StyleSheet.create({
-        container: {
-            height: height,
-            // backgroundColor: theme.colors.backgroundLight,
-            borderRadius: 25,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            width: Dimensions.get("screen").width - 20
-        },
-        imageDimension: {
-            width: Dimensions.get("screen").width - 20,
-            height: 300,
-        },
-        imageStyle: {},
-        dotContainer: {
-            flexDirection: "row",
-            justifyContent: "center",
-            marginVertical: 15,
-            position: "absolute",
-            bottom: 5,
-            backgroundColor: colorScheme === 'dark' ? 'rgba(213,213,213,0.9)' : 'rgba(122,122,122,0.9)',
-            borderRadius: 25,
-        },
-        dot: {
-            width: 7,
-            height: 7,
-            margin: 5,
-            borderRadius: 30,
-            backgroundColor: theme.colors.textLight,
-        }
-    });
+  const renderImage = ({ item, index }: { item: { uri: string; title?: string }; index: number }) => (
+    <View style={styles.imageContainer}>
+      <Image
+        source={{ uri: item.uri }}
+        style={styles.image}
+        resizeMode="cover"
+      />
+    </View>
+  );
 
-    return (
-        <View style={styles.container}>
-            <FlatList
-                data={data}
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                renderItem={({item, index}) => {
-                    return (
-                        <ImageBackground
-                            source={{uri: item.uri}}
-                            style={styles.imageDimension}
-                            imageStyle={styles.imageStyle}
-                            resizeMode="auto"
-                        >
+  const styles = StyleSheet.create({
+    container: {
+      position: 'relative',
+    },
+    imageContainer: {
+      width: screenWidth - 20,
+    },
+    image: {
+      width: '100%',
+      height: 180,
+      borderRadius: 15,
+    },
+    overlay: {
+      position: 'absolute',
+      bottom: 10,
+      right: 10,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    counterText: {
+      color: 'white',
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    dotsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginHorizontal: 3,
+    },
+    activeDot: {
+      backgroundColor: theme.colors.primary,
+    },
+    inactiveDot: {
+      backgroundColor: theme.colors.neutral,
+    },
+  });
 
-                        </ImageBackground>
-                    );
-                }}
-                keyExtractor={(item) => item.id.toString()}
-                pagingEnabled={true}
-                ref={(ref) => {
-                    carouselRef.current = ref;
-                }}
-                viewabilityConfig={viewConfigRef}
-                onViewableItemsChanged={onViewRef.current}
-            />
-            <View style={styles.dotContainer}>
-                {data.map(({}, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.dot,
-                            {opacity: index === activeIndex ? 1 : 0.5},
-                        ]}
-                    >
-
-                    </View>
-                ))}
-            </View>
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      <FlatList
+        ref={flatListRef}
+        data={images}
+        renderItem={renderImage}
+        keyExtractor={(_, index) => index.toString()}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged.current}
+        viewabilityConfig={viewabilityConfig.current}
+      />
+      
+      {images.length > 1 && (
+        <>
+          <View style={styles.overlay}>
+            <Text style={styles.counterText}>
+              {activeIndex + 1} / {images.length}
+            </Text>
+          </View>
+          
+          <View style={styles.dotsContainer}>
+            {images.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === activeIndex ? styles.activeDot : styles.inactiveDot,
+                ]}
+              />
+            ))}
+          </View>
+        </>
+      )}
+    </View>
+  );
 }

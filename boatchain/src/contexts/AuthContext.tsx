@@ -5,11 +5,16 @@ import { useWallet } from './WalletContext';
 
 const log = (...a: any[]) => console.log('[Auth]', ...a);
 
+export type UserRole = 'standard_user' | 'certifier';
+
 export type AuthCtx = {
   jwt?: string;
   address?: string;
+  userRole?: UserRole;
+  isVerified?: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  fetchUserProfile: () => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -24,6 +29,8 @@ const API = (Constants.expoConfig?.extra as any)?.apiBase as string;
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { address, requestAccounts, getSelectedAddress, personalSign, disconnect } = useWallet();
   const [jwt, setJwt] = useState<string>();
+  const [userRole, setUserRole] = useState<UserRole>('standard_user');
+  const [isVerified, setIsVerified] = useState<boolean>(false);
 
   // IMPORTANT: on n'essaie plus de restaurer un JWT persisté.
   // À chaque relance (nouvelle exécution JS), on efface le token stocké → l'app
@@ -93,12 +100,66 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
   };
 
+  const fetchUserProfile = async () => {
+    if (!jwt) {
+      log('No JWT available for profile fetch');
+      return;
+    }
+
+    try {
+      log('Fetching user profile...');
+      const response = await fetch(`${API}/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        log('Profile fetch failed:', response.status);
+        return;
+      }
+
+      const profileData = await response.json();
+      log('Profile data:', profileData);
+      
+      setUserRole(profileData.role);
+      setIsVerified(profileData.isVerified);
+    } catch (error) {
+      log('Profile fetch error:', error);
+    }
+  };
+
   const logout = async () => {
     log('logout');
     setJwt(undefined);
+    setUserRole('standard_user');
+    setIsVerified(false);
     await SecureStore.deleteItemAsync('jwt');
     await disconnect();
   };
 
-  return <Ctx.Provider value={{ jwt, address, login, logout }}>{children}</Ctx.Provider>;
+  // Fetch user profile when JWT changes
+  useEffect(() => {
+    if (jwt && jwt !== `fake.jwt.token.for.dev.${Date.now()}`.slice(0, 20)) {
+      fetchUserProfile();
+    }
+  }, [jwt]);
+
+  return (
+    <Ctx.Provider 
+      value={{ 
+        jwt, 
+        address, 
+        userRole, 
+        isVerified, 
+        login, 
+        logout, 
+        fetchUserProfile 
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 };

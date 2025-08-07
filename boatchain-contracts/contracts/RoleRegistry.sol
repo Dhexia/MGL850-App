@@ -5,17 +5,17 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title RoleRegistry
- * @notice Attribue et vérifie les rôles externes (professionnel, assureur…).
+ * @notice Gère les rôles d'utilisateurs : Standard Users et Certificateurs.
  */
 contract RoleRegistry is AccessControl {
-    /// Hash IPFS prouvant la licence ou le diplôme d’un professionnel
+    /// Hash IPFS prouvant la licence ou le diplôme d'un certificateur
     struct Certificate {
         string proof;      // ex : ipfs://Qm...
         bool   valid;
     }
 
+    /// Rôle pour les certificateurs (organismes de certification)
     bytes32 public constant PROFESSIONAL_ROLE = keccak256("PROFESSIONAL_ROLE");
-    bytes32 public constant INSURER_ROLE      = keccak256("INSURER_ROLE");
 
     mapping(address => Certificate) private _certs;
 
@@ -24,7 +24,7 @@ contract RoleRegistry is AccessControl {
     }
 
     /**
-     * @notice Certifie un professionnel et lui assigne le rôle.
+     * @notice Certifie un certificateur et lui assigne le rôle PROFESSIONAL_ROLE.
      * @dev    La preuve peut être mise à jour, jamais supprimée.
      */
     function certifyProfessional(address account, string calldata proof)
@@ -36,7 +36,7 @@ contract RoleRegistry is AccessControl {
     }
 
     /**
-     * @notice Révoque (ou suspend) un professionnel certifié.
+     * @notice Révoque (ou suspend) un certificateur.
      */
     function revokeProfessional(address account)
         external
@@ -47,7 +47,8 @@ contract RoleRegistry is AccessControl {
     }
 
     /**
-     * @return true si l’adresse possède le rôle et une certification valide.
+     * @notice Vérifie si l'adresse est un certificateur valide.
+     * @return true si l'adresse possède le rôle PROFESSIONAL_ROLE et une certification valide.
      */
     function isProfessional(address account) external view returns (bool) {
         return
@@ -55,5 +56,11 @@ contract RoleRegistry is AccessControl {
             _certs[account].valid;
     }
 
-    /// Vue similaire pour les assureurs, si besoin
+    /**
+     * @notice Vérifie si l'adresse est un utilisateur standard (pas de rôle spécial).
+     * @return true si l'adresse n'a pas le rôle PROFESSIONAL_ROLE.
+     */
+    function isStandardUser(address account) external view returns (bool) {
+        return !hasRole(PROFESSIONAL_ROLE, account);
+    }
 }

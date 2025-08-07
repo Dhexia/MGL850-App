@@ -26,13 +26,13 @@ export interface RoleRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
-      | "INSURER_ROLE"
       | "PROFESSIONAL_ROLE"
       | "certifyProfessional"
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
       | "isProfessional"
+      | "isStandardUser"
       | "renounceRole"
       | "revokeProfessional"
       | "revokeRole"
@@ -45,10 +45,6 @@ export interface RoleRegistryInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "INSURER_ROLE",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -76,6 +72,10 @@ export interface RoleRegistryInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "isStandardUser",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceRole",
     values: [BytesLike, AddressLike]
   ): string;
@@ -97,10 +97,6 @@ export interface RoleRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "INSURER_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "PROFESSIONAL_ROLE",
     data: BytesLike
   ): Result;
@@ -116,6 +112,10 @@ export interface RoleRegistryInterface extends Interface {
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isProfessional",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isStandardUser",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -236,8 +236,6 @@ export interface RoleRegistry extends BaseContract {
 
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-  INSURER_ROLE: TypedContractMethod<[], [string], "view">;
-
   PROFESSIONAL_ROLE: TypedContractMethod<[], [string], "view">;
 
   certifyProfessional: TypedContractMethod<
@@ -261,6 +259,12 @@ export interface RoleRegistry extends BaseContract {
   >;
 
   isProfessional: TypedContractMethod<
+    [account: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  isStandardUser: TypedContractMethod<
     [account: AddressLike],
     [boolean],
     "view"
@@ -298,9 +302,6 @@ export interface RoleRegistry extends BaseContract {
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "INSURER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "PROFESSIONAL_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -329,6 +330,9 @@ export interface RoleRegistry extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "isProfessional"
+  ): TypedContractMethod<[account: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "isStandardUser"
   ): TypedContractMethod<[account: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "renounceRole"

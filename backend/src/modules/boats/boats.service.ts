@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ChainService } from '../chain/chain.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import type { BoatEvents } from '../../abi/typechain-types/contracts/BoatEvents';
 
 type EventData = BoatEvents.EventDataStructOutput;
@@ -14,6 +15,7 @@ export class BoatsService {
   constructor(
     private readonly cfg: ConfigService,
     private readonly chain: ChainService,
+    private readonly cloudinary: CloudinaryService,
   ) {
     this.supa = createClient(
       this.cfg.get<string>('SUPABASE_URL')!,
@@ -126,10 +128,10 @@ export class BoatsService {
         throw new ForbiddenException('Not a certified professional');
       }
     } else if (kind === 2) {
+      // Incident : seuls les propriétaires peuvent déclarer
       const isOwner = await this.chain.isOwner(boatId, caller);
-      const isInsurer = await this.chain.isInsurer(caller);
-      if (!isOwner && !isInsurer) {
-        throw new ForbiddenException('Not owner nor insurer');
+      if (!isOwner) {
+        throw new ForbiddenException('Only owner can log incidents');
       }
     } else if (kind === 0) {
       if (!(await this.chain.isOwner(boatId, caller))) {
@@ -138,5 +140,24 @@ export class BoatsService {
     }
 
     return this.chain.addEventTx(boatId, kind, ipfsHash);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Upload d'images via Cloudinary                                      */
+  /* ------------------------------------------------------------------ */
+  async uploadImages(files: Express.Multer.File[]): Promise<{ images: Array<{ url: string; public_id: string }> }> {
+    if (!files || files.length === 0) {
+      throw new Error('No files provided');
+    }
+
+    const uploadPromises = files.map(file => 
+      this.cloudinary.uploadImage(file, 'boatchain/boats')
+    );
+
+    const images = await Promise.all(uploadPromises);
+    
+    this.log.log(`📸 Uploaded ${images.length} images to Cloudinary`);
+    
+    return { images };
   }
 }
