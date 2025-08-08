@@ -36,6 +36,8 @@ export type { SafeCast } from "./@openzeppelin/contracts/utils/math/SafeCast";
 export { SafeCast__factory } from "./factories/@openzeppelin/contracts/utils/math/SafeCast__factory";
 export type { Strings } from "./@openzeppelin/contracts/utils/Strings";
 export { Strings__factory } from "./factories/@openzeppelin/contracts/utils/Strings__factory";
+export type { BoatCertificate } from "./contracts/BoatCertificate";
+export { BoatCertificate__factory } from "./factories/contracts/BoatCertificate__factory";
 export type { BoatEvents } from "./contracts/BoatEvents";
 export { BoatEvents__factory } from "./factories/contracts/BoatEvents__factory";
 export type { BoatPassport } from "./contracts/BoatPassport";

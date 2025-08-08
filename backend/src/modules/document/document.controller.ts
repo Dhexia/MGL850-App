@@ -33,7 +33,9 @@ export class DocumentController {
     @Req() req: Request & { user?: { address: string } },
   ) {
     const cid = await this.docs.upload(file.buffer);
-    return this.boats.addEvent(id, kind, cid, req.user!.address);
+    // TODO: Cette route doit être refactorisée pour utiliser EventsService
+    // return this.events.createEvent(id, kind, cid, req.user!.address);
+    return { message: "Route deprecated - use /events instead", ipfsHash: cid };
   }
 
   /**

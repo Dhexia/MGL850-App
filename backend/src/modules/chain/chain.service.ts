@@ -6,9 +6,11 @@ import {
   BoatEvents__factory,
   BoatPassport__factory,
   RoleRegistry__factory,
+  BoatCertificate__factory,
   BoatEvents,
   BoatPassport,
   RoleRegistry,
+  BoatCertificate,
 } from '../../abi/typechain-types';
 
 @Injectable()
@@ -21,6 +23,7 @@ export class ChainService {
   private readonly boatEvents: BoatEvents;
   private readonly boatPassport: BoatPassport;
   private readonly roleRegistry: RoleRegistry;
+  private readonly boatCertificate: BoatCertificate;
 
   constructor(private readonly cfg: ConfigService) {
     // lecture / écriture
@@ -43,6 +46,10 @@ export class ChainService {
     );
     this.roleRegistry = RoleRegistry__factory.connect(
       this.cfg.getOrThrow<string>('ROLE_REGISTRY_ADDRESS'),
+      this.provider,
+    );
+    this.boatCertificate = BoatCertificate__factory.connect(
+      this.cfg.getOrThrow<string>('BOAT_CERTIFICATE_ADDRESS'),
       this.provider,
     );
   }
@@ -132,5 +139,55 @@ export class ChainService {
       .addEvent(boatId, kind, ipfsHash);
     this.log.log(`addEvent tx sent: ${tx.hash} → boat=${boatId}, kind=${kind}`);
     return { txHash: tx.hash };
+  }
+
+  /* ================= CERTIFICATS ================= */
+
+  /**
+   * Émet un certificat on-chain
+   */
+  async issueCertificate(
+    boatId: number,
+    certificateType: string,
+    ipfsHash: string,
+    expiresAt: number = 0,
+  ) {
+    const contract = this.boatCertificate.connect(this.signer);
+    const tx = await contract.issueCertificate(boatId, certificateType, ipfsHash, expiresAt);
+    
+    this.log.log(`issueCertificate tx sent: ${tx.hash} → boat=${boatId}, type=${certificateType}`);
+    return { txHash: tx.hash };
+  }
+
+  /**
+   * Valide un certificat on-chain
+   */
+  async validateCertificateOnChain(certificateId: number, isValid: boolean) {
+    const contract = this.boatCertificate.connect(this.signer);
+    const tx = await contract.validateCertificate(certificateId, isValid);
+    
+    this.log.log(`validateCertificate tx sent: ${tx.hash} → cert=${certificateId}, valid=${isValid}`);
+    return { txHash: tx.hash };
+  }
+
+  /**
+   * Récupère un certificat depuis la blockchain
+   */
+  async getCertificate(certificateId: number) {
+    return this.boatCertificate.getCertificate(certificateId);
+  }
+
+  /**
+   * Récupère tous les certificats d'un bateau
+   */
+  async getBoatCertificates(boatId: number) {
+    return this.boatCertificate.getBoatCertificates(boatId);
+  }
+
+  /**
+   * Vérifie si un certificat est valide
+   */
+  async isCertificateValid(certificateId: number): Promise<boolean> {
+    return this.boatCertificate.isCertificateValid(certificateId);
   }
 }
