@@ -8,7 +8,7 @@ BoatChain est une application décentralisée (DApp) basée sur la blockchain Et
 
 1. **boatchain-contracts/** - Smart contracts Solidity avec Hardhat
 2. **backend/** - API NestJS avec architecture modulaire et DTOs typés
-3. **boatchain/** - Application mobile React Native/Expo
+3. **frontend/** - Application mobile React Native/Expo
 
 ### 📋 Smart Contracts déployés (Sepolia)
 
@@ -192,7 +192,7 @@ POST /documents/upload-json        → Upload JSON vers IPFS
 
 **API Layer Modulaire** :
 ```typescript
-boatchain/src/lib/api/
+frontend/src/lib/api/
 ├── boats.api.ts        # CRUD bateaux + mint NFT
 ├── events.api.ts       # Événements avec nouveaux endpoints
 ├── certificates.api.ts # NOUVEAU - Gestion certificats
@@ -364,7 +364,7 @@ npm run start:dev    # Architecture modulaire : boats/events/certificates
 
 #### Frontend React Native
 ```bash
-cd boatchain
+cd frontend
 npm install
 npm start           # Serveur Expo dev avec cache intelligent
 npm run android     # Build Android avec optimisations

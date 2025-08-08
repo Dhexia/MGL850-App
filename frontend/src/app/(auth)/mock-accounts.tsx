@@ -13,14 +13,14 @@ import { TEST_ACCOUNTS } from '@/lib/test-accounts';
 
 const TestLoginScreen = () => {
   const theme = useTheme();
-  const { mockLoginWithAccount, isMockMode } = useAuth();
+  const { devLoginWithAccount, isMockMode } = useAuth();
 
   const handleAccountSelect = async (account: typeof TEST_ACCOUNTS[0]) => {
     try {
-      await mockLoginWithAccount(account);
-      router.replace('/'); // Retour à index.tsx pour logique centralisée
+      await devLoginWithAccount(account);
+      router.replace('/(tabs)'); // Aller directement aux tabs après login dev
     } catch (error) {
-      console.error('Mock login failed:', error);
+      console.error('Dev login failed:', error);
     }
   };
 
@@ -57,10 +57,10 @@ const TestLoginScreen = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={{ padding: 20 }}>
         <Text style={[theme.textStyles.titleLarge, { color: theme.colors.text, marginBottom: 8 }]}>
-          Mode Test - Sélectionner un Compte
+          Comptes de Développement
         </Text>
         <Text style={[theme.textStyles.bodyMedium, { color: theme.colors.textSecondary, marginBottom: 24 }]}>
-          Choisissez un compte pour tester différents rôles
+          Choisissez un compte avec accès blockchain complet
         </Text>
       </View>
 
@@ -81,9 +81,22 @@ const TestLoginScreen = () => {
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
-                <Text style={[theme.textStyles.titleMedium, { color: theme.colors.text, marginBottom: 4 }]}>
-                  {account.name}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={[theme.textStyles.titleMedium, { color: theme.colors.text, flex: 1 }]}>
+                    {account.name}
+                  </Text>
+                  <View style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 12,
+                    backgroundColor: '#4CAF50',
+                    marginLeft: 8,
+                  }}>
+                    <Text style={[theme.textStyles.labelSmall, { color: 'white', fontSize: 10 }]}>
+                      🔗 BLOCKCHAIN
+                    </Text>
+                  </View>
+                </View>
                 <View
                   style={{
                     alignSelf: 'flex-start',

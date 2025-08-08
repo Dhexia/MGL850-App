@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ethers, ZeroAddress } from 'ethers';
+import { getDevAccountByAddress, isDevMode } from '../../lib/dev-accounts';
 
 import {
   BoatEvents__factory,
@@ -19,6 +20,7 @@ export class ChainService {
 
   private readonly provider: ethers.JsonRpcProvider;
   private readonly signer: ethers.Wallet;
+  private readonly devSigners: Map<string, ethers.Wallet> = new Map();
 
   private readonly boatEvents: BoatEvents;
   private readonly boatPassport: BoatPassport;
@@ -34,6 +36,11 @@ export class ChainService {
       this.cfg.getOrThrow<string>('PRIVATE_KEY'),
       this.provider,
     );
+
+    // Initialiser les signers des comptes de développement
+    if (isDevMode()) {
+      this.initializeDevSigners();
+    }
 
     // contrats (lecture via provider; écriture via connect(signer))
     this.boatEvents = BoatEvents__factory.connect(
@@ -52,6 +59,27 @@ export class ChainService {
       this.cfg.getOrThrow<string>('BOAT_CERTIFICATE_ADDRESS'),
       this.provider,
     );
+  }
+
+  private initializeDevSigners() {
+    const { DEV_ACCOUNTS } = require('../../lib/dev-accounts');
+    for (const account of DEV_ACCOUNTS) {
+      const wallet = new ethers.Wallet(account.privateKey, this.provider);
+      this.devSigners.set(account.address.toLowerCase(), wallet);
+      this.log.debug(`Initialized dev signer for ${account.name} (${account.address})`);
+    }
+  }
+
+  // Obtenir le bon signer selon le contexte (dev account ou default)
+  private getSigner(forAddress?: string): ethers.Wallet {
+    if (isDevMode() && forAddress) {
+      const devSigner = this.devSigners.get(forAddress.toLowerCase());
+      if (devSigner) {
+        this.log.debug(`Using dev signer for address: ${forAddress}`);
+        return devSigner;
+      }
+    }
+    return this.signer;
   }
 
   /* ================= LECTURE ================= */
@@ -108,8 +136,9 @@ export class ChainService {
   /* ================= ÉCRITURE ================= */
 
   /** Mint un passeport et retourne { txHash, tokenId } */
-  async mintPassport(to: string, uri: string) {
-    const tx = await this.boatPassport.connect(this.signer).mint(to, uri);
+  async mintPassport(to: string, uri: string, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const tx = await this.boatPassport.connect(signer).mint(to, uri);
     this.log.log(`mint tx sent: ${tx.hash} → to=${to}`);
     const receipt = await tx.wait();
     // parse log Transfer(from=0x0, to, tokenId)
@@ -133,9 +162,10 @@ export class ChainService {
   }
 
   /** Ajoute un événement on-chain et retourne { txHash } */
-  async addEventTx(boatId: number, kind: number, ipfsHash: string) {
+  async addEventTx(boatId: number, kind: number, ipfsHash: string, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
     const tx = await this.boatEvents
-      .connect(this.signer)
+      .connect(signer)
       .addEvent(boatId, kind, ipfsHash);
     this.log.log(`addEvent tx sent: ${tx.hash} → boat=${boatId}, kind=${kind}`);
     return { txHash: tx.hash };
@@ -151,8 +181,10 @@ export class ChainService {
     certificateType: string,
     ipfsHash: string,
     expiresAt: number = 0,
+    fromAddress?: string,
   ) {
-    const contract = this.boatCertificate.connect(this.signer);
+    const signer = this.getSigner(fromAddress);
+    const contract = this.boatCertificate.connect(signer);
     const tx = await contract.issueCertificate(boatId, certificateType, ipfsHash, expiresAt);
     
     this.log.log(`issueCertificate tx sent: ${tx.hash} → boat=${boatId}, type=${certificateType}`);
@@ -162,8 +194,9 @@ export class ChainService {
   /**
    * Valide un certificat on-chain
    */
-  async validateCertificateOnChain(certificateId: number, isValid: boolean) {
-    const contract = this.boatCertificate.connect(this.signer);
+  async validateCertificateOnChain(certificateId: number, isValid: boolean, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const contract = this.boatCertificate.connect(signer);
     const tx = await contract.validateCertificate(certificateId, isValid);
     
     this.log.log(`validateCertificate tx sent: ${tx.hash} → cert=${certificateId}, valid=${isValid}`);

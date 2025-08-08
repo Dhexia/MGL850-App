@@ -82,9 +82,9 @@ export class BoatsService {
   /* ------------------------------------------------------------------ */
   /* Création de passeport (NFT)                                         */
   /* ------------------------------------------------------------------ */
-  async mintPassport(to: string, uri: string) {
+  async mintPassport(to: string, uri: string, fromAddress?: string) {
     // ChainService renvoie { txHash, tokenId }
-    return this.chain.mintPassport(to, uri);
+    return this.chain.mintPassport(to, uri, fromAddress);
   }
 
   /* ------------------------------------------------------------------ */

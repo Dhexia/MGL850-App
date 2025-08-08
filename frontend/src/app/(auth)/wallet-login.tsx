@@ -22,30 +22,23 @@ const WalletLoginScreen = () => {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // étape 1: ouverture WalletConnect pour choisir le wallet
-  const handleOpenWalletConnect = async () => {
+  // Connexion et authentification complète en une seule étape
+  const handleConnectAndLogin = async () => {
     try {
-      await connect();
-      // à ce stade tu vas dans MetaMask, tu choisis le compte, puis tu reviens
-      // on n'enchaîne pas automatiquement la signature tant que tu n'as pas confirmé vouloir signer
-    } catch (e: any) {
-      Alert.alert('Connexion', e?.message ?? 'Erreur WalletConnect');
-    }
-  };
-
-  // étape 2: signature du nonce et login backend
-  const handleSignAndLogin = async () => {
-    try {
-      if (!address) {
-        Alert.alert('Connexion', `Aucun wallet connecté. Ouvre d'abord WalletConnect.`);
-        return;
-      }
       setLoading(true);
-      await login();          // GET /auth/nonce → personal_sign(nonce) → POST /auth/login
-      router.replace('/'); // Retour à index.tsx pour logique centralisée
+      
+      // Étape 1: Connexion wallet (si pas déjà connecté)
+      if (!address) {
+        await connect();
+      }
+      
+      // Étape 2: Authentification automatique après connexion
+      await login(); // GET /auth/nonce → personal_sign(nonce) → POST /auth/login
+      
+      // Redirection vers l'app
+      router.replace('/(tabs)');
     } catch (e: any) {
-      // si le backend renvoie un 401 ou 400 on expose le message si présent
-      const msg = e?.message ?? 'Login échoué';
+      const msg = e?.message ?? 'Connexion échouée';
       Alert.alert('Connexion', msg);
     } finally {
       setLoading(false);
@@ -76,34 +69,29 @@ const WalletLoginScreen = () => {
               <Text style={styles.bigTitle}>Commençons !</Text>
             </View>
 
-            {/* étape 1: ouvrir WalletConnect pour choisir le wallet */}
+            {/* Connexion MetaMask (directe) */}
             <Pressable 
               style={[styles.buttonsContainer, loading && { opacity: 0.7 }]} 
-              onPress={handleOpenWalletConnect}
+              onPress={handleConnectAndLogin}
               disabled={loading}
             >
               <Image source={require('@/assets/images/metamask.png')} style={styles.images} />
-              <Text style={styles.buttonsText}>Choisir un wallet</Text>
+              <Text style={styles.buttonsText}>
+                {loading ? 'Connexion...' : 'Se connecter avec MetaMask'}
+              </Text>
             </Pressable>
 
-            {/* étape 2: signer le nonce et se connecter au backend */}
+            {/* Connexion WalletConnect (autres wallets) */}
             <Pressable 
               style={[styles.buttonsContainer, loading && { opacity: 0.7 }]} 
-              onPress={handleSignAndLogin}
+              onPress={handleConnectAndLogin}
               disabled={loading}
             >
               <Image source={require('@/assets/images/walletConnect.png')} style={styles.images} />
               <Text style={styles.buttonsText}>
-                {loading ? 'Connexion...' : 'Signer et continuer'}
+                {loading ? 'Connexion...' : 'Se connecter avec WalletConnect'}
               </Text>
             </Pressable>
-
-            {/* aide visuelle optionnelle: adresse détectée après étape 1 */}
-            {address ? (
-              <Text style={{ marginTop: 8, color: theme.colors.textDark }}>
-                Adresse détectée: {address.slice(0, 6)}...{address.slice(-4)}
-              </Text>
-            ) : null}
 
             {/* Bouton retour */}
             <Pressable 

@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ChainService } from '../chain/chain.service';
+import { isDevMode } from '../../lib/dev-accounts';
 
 @Controller('auth')
 export class AuthController {
@@ -24,6 +25,16 @@ export class AuthController {
   login(@Body() body: { nonce: string; signature: string }) {
     this.logger.debug(`POST /auth/login sig.len=${body?.signature?.length}`);
     return this.auth.login(body.nonce, body.signature);
+  }
+
+  @Public()
+  @Post('dev-login')
+  async devLogin(@Body() body: { address: string }) {
+    if (!isDevMode()) {
+      throw new Error('Dev login only available in development mode');
+    }
+    this.logger.debug(`POST /auth/dev-login address=${body.address}`);
+    return this.auth.devLogin(body.address);
   }
 
   @UseGuards(JwtAuthGuard)

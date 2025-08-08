@@ -8,6 +8,7 @@ import {
   Logger,
   UploadedFiles,
   UseInterceptors,
+  Request,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { BoatsService } from './boats.service';
@@ -48,9 +49,10 @@ export class BoatsController {
 
   /** Frappe d'un nouveau passeport (renvoie aussi tokenId) */
   @Post()
-  async mint(@Body() dto: CreateBoatDto) {
-    this.logger.log(`⚡ Minting new boat passport for ${dto.to}`);
-    return this.boats.mintPassport(dto.to, dto.uri);
+  async mint(@Body() dto: CreateBoatDto, @Request() req: any) {
+    const caller = req.user?.address;
+    this.logger.log(`⚡ Minting new boat passport for ${dto.to} (caller: ${caller})`);
+    return this.boats.mintPassport(dto.to, dto.uri, caller);
   }
 
   /** Upload d'images pour un bateau */

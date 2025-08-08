@@ -4,6 +4,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import { ethers } from 'ethers';
+import { DEV_ACCOUNTS, getDevAccountByAddress, isDevMode } from '../../lib/dev-accounts';
 
 @Injectable()
 export class AuthService {
@@ -46,5 +47,30 @@ export class AuthService {
     const token = await this.jwt.signAsync({ sub: recovered });
     this.logger.debug(`login success for ${recovered.toLowerCase()}`);
     return { token };
+  }
+
+  // Connexion directe pour les comptes de développement (bypasse la signature)
+  async devLogin(address: string) {
+    if (!isDevMode()) {
+      throw new UnauthorizedException('Dev login only available in development mode');
+    }
+
+    const devAccount = getDevAccountByAddress(address);
+    if (!devAccount) {
+      throw new UnauthorizedException('Invalid dev account address');
+    }
+
+    const token = await this.jwt.signAsync({ sub: devAccount.address.toLowerCase() });
+    this.logger.debug(`dev login success for ${devAccount.name} (${devAccount.address})`);
+    
+    return { 
+      token,
+      account: {
+        address: devAccount.address,
+        role: devAccount.role,
+        name: devAccount.name,
+        description: devAccount.description
+      }
+    };
   }
 }

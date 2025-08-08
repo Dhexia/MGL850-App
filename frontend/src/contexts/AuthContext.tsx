@@ -17,7 +17,7 @@ export type AuthCtx = {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
-  mockLoginWithAccount: (account: TestAccount) => Promise<void>;
+  devLoginWithAccount: (account: TestAccount) => Promise<void>;
   isMockMode: boolean;
 };
 
@@ -43,9 +43,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     return canMock;
   });
 
-  // IMPORTANT: on n'essaie plus de restaurer un JWT persisté.
-  // À chaque relance (nouvelle exécution JS), on efface le token stocké → l'app
-  // n'est "connectée" qu'après une nouvelle signature.
+  // Force de nouveau login à chaque relance d'app pour éviter les tokens expirés
   useEffect(() => {
     (async () => {
       try {
@@ -56,22 +54,37 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     })();
   }, []);
 
-  const mockLoginWithAccount = async (account: TestAccount) => {
+  const devLoginWithAccount = async (account: TestAccount) => {
     try {
-      log('Mock login with account:', account.name);
+      log('Dev login with account:', account.name);
+      
+      const response = await fetch(`${API}/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: account.address }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        log('Dev login failed:', response.status, errorText);
+        throw new Error(`Dev login failed: ${errorText}`);
+      }
+      
+      const { token, account: accountInfo } = await response.json();
+      log('Dev login successful:', accountInfo);
+      
       setMockAddress(account.address);
-      setUserRole(account.role);
-      setIsVerified(account.role === 'certifier');
+      setUserRole(accountInfo.role);
+      setIsVerified(accountInfo.role === 'certifier');
+      setJwt(token);
       
-      const fakeToken = `mock.jwt.${account.address}.${Date.now()}`;
-      setJwt(fakeToken);
-      await SecureStore.setItemAsync('jwt', fakeToken);
-      await SecureStore.setItemAsync('mockAddress', account.address);
-      await SecureStore.setItemAsync('mockRole', account.role);
+      await SecureStore.setItemAsync('jwt', token);
+      await SecureStore.setItemAsync('devAddress', account.address);
+      await SecureStore.setItemAsync('devRole', accountInfo.role);
       
-      log('Mock login successful for:', account.name);
+      log('Login successful for:', account.name);
     } catch (error) {
-      log('Mock login error:', error);
+      log('Login error:', error);
       throw error;
     }
   };
@@ -84,47 +97,28 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       log('login start, chosen addr=', addr);
       if (!addr) throw new Error('Wallet non connecté');
 
-      // TEMPORARY MOCK - Network issues workaround
-      log('MOCK MODE: Bypassing network auth for development');
-      const fakeToken = `fake.jwt.token.for.dev.${Date.now()}`;
-      log('mock jwt.len=', fakeToken.length);
-      setJwt(fakeToken);
-      await SecureStore.setItemAsync('jwt', fakeToken);
-      return;
-
-      // ORIGINAL AUTH CODE (commented for network issues):
-      // 2) Récupère un nonce (hex string) côté back
-      // log('About to fetch:', `${API}/auth/nonce?address=${addr}`);
-      // const r1 = await fetch(`${API}/auth/nonce?address=${addr}`);
-      // log('GET /auth/nonce status=', r1.status);
-      // if (!r1.ok) {
-      //   const body = await r1.text().catch(() => '');
-      //   log('GET /auth/nonce body=', body);
-      //   throw new Error(`Erreur /auth/nonce ${body}`);
-      // }
-      // const { nonce } = await r1.json();
-      // log('nonce=', nonce);
-      //
-      // // 3) Signature des octets du hex fourni (WalletConnect/MetaMask OK)
-      // const signature = await personalSign(nonce);
-      // log('signature.len=', String(signature).length);
-      //
-      // // 4) Login — si ton back attend encore { address, signature }, remets l'adresse ici.
-      // const r2 = await fetch(`${API}/auth/login`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ nonce, signature }),
-      // });
-      // log('POST /auth/login status=', r2.status);
-      // if (!r2.ok) {
-      //   const body = await r2.text().catch(() => '');
-      //   log('POST /auth/login body=', body);
-      //   throw new Error(`Login échoué ${body}`);
-      // }
-      // const { token } = await r2.json();
-      // log('jwt.len=', token?.length);
-      // setJwt(token);
-      // await SecureStore.setItemAsync('jwt', token);
+      // Authentification via wallet - pour production
+      const r1 = await fetch(`${API}/auth/nonce?address=${addr}`);
+      if (!r1.ok) {
+        const body = await r1.text().catch(() => '');
+        throw new Error(`Erreur /auth/nonce ${body}`);
+      }
+      const { nonce } = await r1.json();
+      
+      const signature = await personalSign(nonce);
+      
+      const r2 = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nonce, signature }),
+      });
+      if (!r2.ok) {
+        const body = await r2.text().catch(() => '');
+        throw new Error(`Login échoué ${body}`);
+      }
+      const { token } = await r2.json();
+      setJwt(token);
+      await SecureStore.setItemAsync('jwt', token);
     } catch (error) {
       log('Login error:', error);
       throw error;
@@ -137,9 +131,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       return;
     }
 
-    // Skip profile fetch in mock mode - data is already set
-    if (isMockMode && jwt.startsWith('mock.jwt.')) {
-      log('Skipping profile fetch in mock mode - using mock data');
+    // Skip profile fetch in mock mode - data is already set from dev login
+    if (isMockMode) {
+      log('Skipping profile fetch in dev mode - using dev account data');
       return;
     }
 
@@ -175,27 +169,27 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setIsVerified(false);
     setMockAddress(undefined);
     await SecureStore.deleteItemAsync('jwt');
-    await SecureStore.deleteItemAsync('mockAddress');
-    await SecureStore.deleteItemAsync('mockRole');
+    await SecureStore.deleteItemAsync('devAddress');
+    await SecureStore.deleteItemAsync('devRole');
     if (!isMockMode) {
       await disconnect();
     }
   };
 
-  // Fetch user profile when JWT changes
+  // Fetch user profile when JWT changes (skip for dev mode)
   useEffect(() => {
-    if (jwt && jwt !== `fake.jwt.token.for.dev.${Date.now()}`.slice(0, 20)) {
+    if (jwt && !isMockMode) {
       fetchUserProfile();
     }
-  }, [jwt, fetchUserProfile]);
+  }, [jwt, fetchUserProfile, isMockMode]);
 
-  // Restore mock data on app start if in mock mode
+  // Restore dev account data on app start if in dev mode
   useEffect(() => {
     if (isMockMode) {
       (async () => {
         try {
-          const storedMockAddress = await SecureStore.getItemAsync('mockAddress');
-          const storedMockRole = await SecureStore.getItemAsync('mockRole');
+          const storedMockAddress = await SecureStore.getItemAsync('devAddress');
+          const storedMockRole = await SecureStore.getItemAsync('devRole');
           const storedJwt = await SecureStore.getItemAsync('jwt');
           
           if (storedMockAddress && storedMockRole && storedJwt) {
@@ -203,10 +197,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             setUserRole(storedMockRole as UserRole);
             setIsVerified(storedMockRole === 'certifier');
             setJwt(storedJwt);
-            log('Restored mock session:', storedMockAddress, storedMockRole);
+            log('Restored dev session:', storedMockAddress, storedMockRole);
           }
         } catch (error) {
-          log('Error restoring mock session:', error);
+          log('Error restoring dev session:', error);
         }
       })();
     }
@@ -222,7 +216,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         login, 
         logout, 
         fetchUserProfile,
-        mockLoginWithAccount,
+        devLoginWithAccount,
         isMockMode
       }}
     >
