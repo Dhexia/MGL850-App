@@ -1,49 +1,100 @@
 {
   "specification": {
-    "price": 146000,
-    "title": "2. Selling Sun Odyssey 380",
-    "name": "Sun Odyssey 380",
-    "city": "La Rochelle",
-    "postal_code": "17000",
-    "year": 2020,
-    "overall_length": 13.00,
-    "width": 4.29,
-    "draft": 2.20,
-    "engine": "Yanmar 4JH57 - 57CV",
-    "fresh_water_capacity": 530,
-    "fuel_capacity": 200,
-    "cabins": 3,
+    "price": 89000,
+    "title": "Beau Catamaran Lagoon 380",
+    "name": "Lagoon 380",
+    "city": "Marseille",
+    "postal_code": "13000",
+    "year": 2018,
+    "overall_length": 11.50,
+    "width": 6.63,
+    "draft": 1.20,
+    "engine": "2x Yanmar 3YM20 - 20CV",
+    "fresh_water_capacity": 600,
+    "fuel_capacity": 300,
+    "cabins": 4,
     "beds": 8,
-    "boat_type": "sailboat",
+    "boat_type": "catamaran",
     "navigation_category": "A - offshore navigation",
-    "description": "Le Sun Odyssey 440 est un voilier de croisière signé Jeanneau, conçu pour allier performance en mer et habitabilité à bord.\nGrâce à son pont en pente douce, la circulation est sécurisée et fluide du cockpit jusqu’à l’avant.\nSon design contemporain offre une belle luminosité intérieure, un carré spacieux, et plusieurs configurations de cabines. Parfait pour les navigations côtières comme hauturières, en famille ou entre amis.",
-    "summary": "Voilier moderne avec pont en circulation fluide et intérieur lumineux."
+    "description": "Magnifique catamaran Lagoon 380 parfait pour la croisière en famille. Spacieux et confortable, il offre une stabilité remarquable et de nombreux espaces de vie. Cuisine équipée, carré panoramique et cabines ventilées. Idéal pour découvrir la Méditerranée en toute sécurité.",
+    "summary": "Catamaran spacieux et stable, parfait pour la croisière familiale.",
+    "status": "validated",
+    "owner_id": "0x742d35Cc6635Bb0C73f71F3E5De8Dd7b2Ba8cF9E",
+    "is_for_sale": true
   },
   "certificates": [
     {
-      "person": "Maxime Dubois",
-      "date": "2025-03-17",
-      "title": "Expertise structurelle complète",
-      "expires": "2026-03-17",
-      "status": "valid",
-      "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
+      "id": "cert_2_1",
+      "person": "Bureau Veritas Marine",
+      "date": "2024-11-20",
+      "title": "Expertise technique complète",
+      "expires": "2025-11-20",
+      "status": "validated",
+      "description": "Contrôle technique approfondi des coques, ponts, moteurs et équipements de sécurité. Conforme aux normes CE et classification.",
       "attachments": [
         {
-          "title": "expertise_struct_mars25.pdf",
-          "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+          "title": "rapport_technique_nov24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    },
+    {
+      "id": "cert_2_2",
+      "person": "Assurance Maritime Plus",
+      "date": "2025-01-05",
+      "title": "Évaluation assurance",
+      "expires": "2026-01-05", 
+      "status": "suspicious",
+      "description": "Évaluation pour renouvellement police d'assurance. Quelques points d'attention relevés sur l'état des voiles.",
+      "attachments": [
+        {
+          "title": "evaluation_assurance_jan25.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "event_2_1",
+      "boatName": "Lagoon 380",
+      "date": "2024-08-15",
+      "shortTitle": "Incident",
+      "title": "Collision mineure au port",
+      "status": "validated",
+      "description": "Léger frottement contre le ponton lors d'une manœuvre par vent fort. Rayure superficielle sur coque bâbord réparée.",
+      "attachments": [
+        {
+          "title": "rapport_incident_aout24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    },
+    {
+      "id": "event_2_2",
+      "boatName": "Lagoon 380",
+      "date": "2024-10-12",
+      "shortTitle": "Maintenance",
+      "title": "Révision moteurs annuelle",
+      "status": "rejected",
+      "description": "Révision complète des deux moteurs Yanmar avec changement huile et filtres. Documentation incomplète.",
+      "attachments": [
+        {
+          "title": "maintenance_moteurs_oct24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
         }
       ]
     }
   ],
   "images": [
     {
-      "uri": "http://192.168.2.10:5000/images/2/1_001.jpg"
+      "uri": "https://images.unsplash.com/photo-1570650044200-75dd7c7b2aa8?w=800&q=80"
     },
     {
-      "uri": "http://192.168.2.10:5000/images/2/1_002.jpg"
+      "uri": "https://images.unsplash.com/photo-1580674285054-bed31e145f59?w=800&q=80" 
     },
     {
-      "uri": "http://192.168.2.10:5000/images/2/1_003.jpg"
+      "uri": "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=800&q=80"
     }
   ]
 }

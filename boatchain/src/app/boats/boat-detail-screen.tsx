@@ -16,11 +16,13 @@ import BoatEventsSection from "@/components/boat/BoatEventsSection";
 
 export default function BoatDetailScreen() {
     const {
+        boatId,
         specification: specString,
         certificates: certString,
         images: imgString,
         events: eventsString
     } = useLocalSearchParams<{
+        boatId: string;
         specification: string;
         certificates: string;
         images: string;
@@ -48,7 +50,15 @@ export default function BoatDetailScreen() {
 
     return (
         <ScrollView style={styles.mainContainer}>
-            <BoatHeader />
+            <BoatHeader 
+                boatId={boatId}
+                ownerId={specification?.owner_id}
+                isForSale={specification?.is_for_sale}
+                specification={specification}
+                images={images}
+                certificates={certificates}
+                events={eventsData}
+            />
             
             <View style={styles.contentContainer}>
                 <BoatImageSection 

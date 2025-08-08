@@ -4,17 +4,23 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { BoatChainValidated } from '@/components/BoatChainValidated';
+import { createCertifierActionStyles } from '@/styles/CertifierActions.style';
 import * as WebBrowser from 'expo-web-browser';
 
 interface EventData {
+  id?: string;
   boatName: string;
   date: string;
   shortTitle: string;
   title: string;
   description?: string;
+  status: 'validated' | 'pending' | 'rejected' | 'suspicious';
   attachments?: Array<{ title: string; uri: string }>;
 }
 
@@ -34,6 +40,30 @@ const openPDF = async (url: string) => {
 
 export default function BoatEvent({ eventData }: BoatEventProps) {
   const theme = useTheme();
+  const { userRole } = useAuth();
+  const certifierStyles = createCertifierActionStyles(theme);
+  
+  const isCertifier = userRole === 'certifier';
+  const canRevoke = isCertifier && (eventData.status === 'validated' || eventData.status === 'suspicious');
+  
+  const handleRevoke = () => {
+    Alert.alert(
+      'Révoquer la certification',
+      `Êtes-vous sûr de vouloir révoquer cette certification pour "${eventData.title}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Révoquer', 
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Appel API pour révoquer la certification
+            console.log('Revoking certification for event:', eventData.id);
+            Alert.alert('Succès', 'La certification a été révoquée.');
+          }
+        }
+      ]
+    );
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -137,6 +167,22 @@ export default function BoatEvent({ eventData }: BoatEventProps) {
             ))
           ) : (
             <Text style={styles.attachmentText}>Aucun document joint.</Text>
+          )}
+        </View>
+        
+        {/* Statut et actions pour certificateur */}
+        <View style={certifierStyles.actionContainer}>
+          <View style={certifierStyles.statusContainer}>
+            <BoatChainValidated status={eventData.status} />
+          </View>
+          
+          {canRevoke && (
+            <TouchableOpacity 
+              style={certifierStyles.revokeButton}
+              onPress={handleRevoke}
+            >
+              <Text style={certifierStyles.revokeButtonText}>Révoquer</Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>

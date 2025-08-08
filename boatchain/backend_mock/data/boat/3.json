@@ -1,50 +1,100 @@
 {
   "specification": {
-    "price": 146000,
-    "title": "3. Selling Sun Odyssey 380",
-    "name": "Sun Odyssey 380",
-    "city": "La Rochelle",
-    "postal_code": "17000",
-    "year": 2020,
-    "overall_length": 13.00,
-    "width": 4.29,
-    "draft": 2.20,
-    "engine": "Yanmar 4JH57 - 57CV",
-    "fresh_water_capacity": 530,
-    "fuel_capacity": 200,
-    "cabins": 3,
-    "beds": 8,
-    "boat_type": "sailboat",
-    "navigation_category": "A - offshore navigation",
-    "description": "Le Sun Odyssey 440 est un voilier de croisière signé Jeanneau, conçu pour allier performance en mer et habitabilité à bord.\nGrâce à son pont en pente douce, la circulation est sécurisée et fluide du cockpit jusqu’à l’avant.\nSon design contemporain offre une belle luminosité intérieure, un carré spacieux, et plusieurs configurations de cabines. Parfait pour les navigations côtières comme hauturières, en famille ou entre amis.",
-    "summary": "Voilier moderne avec pont en circulation fluide et intérieur lumineux.",
-    "status": "suspicious"
+    "price": 65000,
+    "title": "Yacht Bavaria 46 Cruiser",
+    "name": "Bavaria 46 Cruiser",
+    "city": "Nice",
+    "postal_code": "06000",
+    "year": 2015,
+    "overall_length": 14.27,
+    "width": 4.35,
+    "draft": 1.85,
+    "engine": "Volvo Penta D3-110 - 110CV",
+    "fresh_water_capacity": 480,
+    "fuel_capacity": 320,
+    "cabins": 4,
+    "beds": 10,
+    "boat_type": "yacht",
+    "navigation_category": "A - offshore navigation", 
+    "description": "Élégant yacht Bavaria 46 Cruiser en excellent état. Très bien entretenu par propriétaire unique. Cockpit spacieux, carré lumineux et finitions de qualité. Équipé pour la navigation hauturière avec gréement récent et électronique moderne. Parfait pour grandes croisières.",
+    "summary": "Yacht élégant bien entretenu, idéal pour grandes croisières.",
+    "status": "pending",
+    "owner_id": "0x8ba1f109551bD432803012645Hac136c30000000",
+    "is_for_sale": false
   },
   "certificates": [
     {
-      "person": "Maxime Dubois",
-      "date": "2025-03-17",
-      "title": "Expertise structurelle complète",
-      "expires": "2026-03-17",
-      "status": "suspicious",
-      "description": "Inspection complète de la coque, du pont, du mât, du safran et des appendices. Aucun défaut structurel relevé. Rapport signé et cacheté.",
+      "id": "cert_3_1",
+      "person": "Lloyd's Register Marine",
+      "date": "2024-09-30",
+      "title": "Inspection de coque annuelle",
+      "expires": "2025-09-30",
+      "status": "pending",
+      "description": "Inspection complète de la coque, hélice et appendices. En cours de traitement par l'organisme certificateur.",
       "attachments": [
         {
-          "title": "expertise_struct_mars25.pdf",
-          "uri": "http://192.168.2.10:5000/attachments/1/expertise_struct_mars25.pdf"
+          "title": "inspection_coque_sept24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    },
+    {
+      "id": "cert_3_2",
+      "person": "Expert Maritime Côte d'Azur", 
+      "date": "2024-06-10",
+      "title": "Certificat de navigabilité",
+      "expires": "2025-06-10",
+      "status": "validated",
+      "description": "Vérification complète des équipements de sécurité, navigation et communication. Conforme à la réglementation.",
+      "attachments": [
+        {
+          "title": "certificat_navigabilite_juin24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "event_3_1",
+      "boatName": "Bavaria 46 Cruiser",
+      "date": "2024-07-22",
+      "shortTitle": "Maintenance",
+      "title": "Changement Grand Voile",
+      "status": "pending",
+      "description": "Remplacement de la grand-voile par un modèle neuf en Dacron. Nouvelle voile North Sails avec système de ris intégré. En attente de validation.",
+      "attachments": [
+        {
+          "title": "facture_grand_voile_juil24.pdf",
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    },
+    {
+      "id": "event_3_2",
+      "boatName": "Bavaria 46 Cruiser",
+      "date": "2024-05-18",
+      "shortTitle": "Réparation",
+      "title": "Révision compresseur climatisation",
+      "status": "validated",
+      "description": "Révision complète du système de climatisation. Remplacement du compresseur défaillant et contrôle du circuit frigorifique.",
+      "attachments": [
+        {
+          "title": "rapport_climatisation_mai24.pdf", 
+          "uri": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
         }
       ]
     }
   ],
   "images": [
     {
-      "uri": "http://192.168.2.10:5000/images/3/1_001.jpg"
+      "uri": "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&q=80"
     },
     {
-      "uri": "http://192.168.2.10:5000/images/3/1_002.jpg"
+      "uri": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=800&q=80"
     },
     {
-      "uri": "http://192.168.2.10:5000/images/3/1_003.jpg"
+      "uri": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80"
     }
   ]
 }

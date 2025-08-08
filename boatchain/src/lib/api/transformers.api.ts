@@ -57,7 +57,7 @@ export function mapMetadataToSpec(meta: any, fallback: Partial<any>): BoatSpecif
     year: Number(meta?.year ?? attributes['year'] ?? fallback.year ?? new Date().getFullYear()),
     description: meta?.description ?? fallback.description ?? '',
     summary: meta?.description ?? fallback.summary ?? '',
-    status: 'validated' as 'validated' | 'pending' | 'rejected',
+    status: 'validated' as 'validated' | 'pending' | 'rejected' | 'suspicious',
     overall_length: Number(meta?.overall_length ?? attributes['overall_length'] ?? fallback.overall_length ?? 0),
     width: Number(meta?.width ?? attributes['width'] ?? fallback.width ?? 0),
     draft: Number(meta?.draft ?? attributes['draft'] ?? fallback.draft ?? 0),

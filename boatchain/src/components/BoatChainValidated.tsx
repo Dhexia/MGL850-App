@@ -30,8 +30,27 @@ export const BoatChainValidated = ({status}: { status: string }) => {
                               size={12}
                               color="#007AFF"
                 />
-                <Text style={boatChainValidatedStyles.text}>Validé par
-                    BoatChain</Text>
+                <Text style={boatChainValidatedStyles.text}>Validé par BoatChain</Text>
+            </View>
+        )
+    } else if (status === "pending") {
+        return (
+            <View style={boatChainValidatedStyles.container}>
+                <FontAwesome6 name={'sailboat'}
+                              size={12}
+                              color="#ffb700"
+                />
+                <Text style={boatChainValidatedStyles.text}>En attente de validation</Text>
+            </View>
+        )
+    } else if (status === "rejected") {
+        return (
+            <View style={boatChainValidatedStyles.container}>
+                <FontAwesome6 name={'sailboat'}
+                              size={12}
+                              color="#ff0000"
+                />
+                <Text style={boatChainValidatedStyles.text}>Rejeté</Text>
             </View>
         )
     } else if (status === "suspicious") {
@@ -49,9 +68,9 @@ export const BoatChainValidated = ({status}: { status: string }) => {
             <View style={boatChainValidatedStyles.container}>
                 <FontAwesome6 name={'sailboat'}
                               size={12}
-                              color="#ffb700"
+                              color="#888888"
                 />
-                <Text style={boatChainValidatedStyles.text}>Inconnu</Text>
+                <Text style={boatChainValidatedStyles.text}>Statut inconnu</Text>
             </View>
         )
     }

@@ -4,16 +4,20 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useTheme } from '@/theme';
+import { useAuth } from '@/contexts/AuthContext';
 import { BoatChainValidated } from '@/components/BoatChainValidated';
+import { createCertifierActionStyles } from '@/styles/CertifierActions.style';
 import * as WebBrowser from 'expo-web-browser';
 
 interface CertificateData {
+  id?: string;
   person: string;
   date: string;
-  status: 'validated' | 'pending' | 'rejected';
+  status: 'validated' | 'pending' | 'rejected' | 'suspicious';
   title: string;
   expires?: string;
   description?: string;
@@ -36,6 +40,30 @@ const openPDF = async (url: string) => {
 
 export default function BoatCertificate({ certificateData }: BoatCertificateProps) {
   const theme = useTheme();
+  const { userRole } = useAuth();
+  const certifierStyles = createCertifierActionStyles(theme);
+  
+  const isCertifier = userRole === 'certifier';
+  const canRevoke = isCertifier && (certificateData.status === 'validated' || certificateData.status === 'suspicious');
+  
+  const handleRevoke = () => {
+    Alert.alert(
+      'Révoquer le certificat',
+      `Êtes-vous sûr de vouloir révoquer le certificat "${certificateData.title}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Révoquer', 
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Appel API pour révoquer le certificat
+            console.log('Revoking certificate:', certificateData.id);
+            Alert.alert('Succès', 'Le certificat a été révoqué.');
+          }
+        }
+      ]
+    );
+  };
 
   const styles = StyleSheet.create({
     certificateContainer: {
@@ -161,6 +189,16 @@ export default function BoatCertificate({ certificateData }: BoatCertificateProp
             <Text style={styles.attachmentText}>Aucun document joint.</Text>
           )}
         </View>
+        
+        {/* Actions pour certificateur */}
+        {canRevoke && (
+          <TouchableOpacity 
+            style={certifierStyles.revokeButton}
+            onPress={handleRevoke}
+          >
+            <Text style={certifierStyles.revokeButtonText}>Révoquer</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

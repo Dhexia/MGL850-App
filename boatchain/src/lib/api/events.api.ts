@@ -1,8 +1,30 @@
 import { apiFetch } from '@/lib/api';
 import type { BlockchainEventRow, BoatEvent } from '@/lib/boat.types';
 
-export async function getBoatEvents(id: number): Promise<BlockchainEventRow[]> {
-  return (await apiFetch(`/boats/${id}/events`)) as BlockchainEventRow[];
+export async function getBoatEvents(boatId: number): Promise<BlockchainEventRow[]> {
+  return (await apiFetch(`/events/boat/${boatId}`)) as BlockchainEventRow[];
+}
+
+export async function createEvent(data: {
+  boatId: number;
+  kind: number;
+  ipfsHash: string;
+}): Promise<{ success: boolean; txHash?: string }> {
+  return await apiFetch('/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }) as { success: boolean; txHash?: string };
+}
+
+export async function validateEvent(boatId: number, txHash: string): Promise<{ success: boolean; txHash?: string }> {
+  return await apiFetch(`/events/${boatId}/${txHash}/validate`, {
+    method: 'PUT',
+  }) as { success: boolean; txHash?: string };
+}
+
+export async function getPendingEvents(): Promise<BlockchainEventRow[]> {
+  return (await apiFetch('/events/pending')) as BlockchainEventRow[];
 }
 
 export function blockchainEventToUIEvent(event: BlockchainEventRow, boatId: number): BoatEvent {

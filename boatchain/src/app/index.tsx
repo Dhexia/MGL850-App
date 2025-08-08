@@ -1,4 +1,3 @@
-
 import { View, Text, Image, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
@@ -15,7 +14,7 @@ import {
 } from '@/styles/layout/HomeScreen.style';
 
 export default function Home() {
-  const { jwt } = useAuth();
+  const { jwt, isMockMode } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // écran de transition très court pour lisser le retour d'arrière-plan
@@ -29,10 +28,14 @@ export default function Home() {
 
   if (loading || booting) return <LoadingScreen />;
   
-  // TEMP: Skip connection screen for development
-  // if (!connected) return <ConnectionScreen setLoading={setLoading} />;
+  // Si connecté → bateaux
+  if (connected) return <Redirect href="/(tabs)" />;
 
-  return <Redirect href="/(tabs)" />;
+  // Si mode dev disponible → sélection de mode
+  if (isMockMode) return <Redirect href="/(auth)/mode" />;
+
+  // Sinon → connexion MetaMask normale
+  return <ConnectionScreen setLoading={setLoading} />;
 }
 
 function LoadingScreen() {
@@ -57,7 +60,7 @@ function ConnectionScreen({ setLoading }: { setLoading: (b: boolean) => void }) 
     try {
       await connect();
       // à ce stade tu vas dans MetaMask, tu choisis le compte, puis tu reviens
-      // on n’enchaîne pas automatiquement la signature tant que tu n’as pas confirmé vouloir signer
+      // on n'enchaîne pas automatiquement la signature tant que tu n'as pas confirmé vouloir signer
     } catch (e: any) {
       Alert.alert('Connexion', e?.message ?? 'Erreur WalletConnect');
     }
@@ -67,7 +70,7 @@ function ConnectionScreen({ setLoading }: { setLoading: (b: boolean) => void }) 
   const handleSignAndLogin = async () => {
     try {
       if (!address) {
-        Alert.alert('Connexion', 'Aucun wallet connecté. Ouvre d’abord WalletConnect.');
+        Alert.alert('Connexion', 'Aucun wallet connecté. Ouvre d\'abord WalletConnect.');
         return;
       }
       setLoading(true);

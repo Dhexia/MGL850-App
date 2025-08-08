@@ -19,7 +19,7 @@ export interface BoatSpecification {
   navigation_category: string;
   description: string;
   summary: string;
-  status: 'validated' | 'pending' | 'rejected';
+  status: 'validated' | 'pending' | 'rejected' | 'suspicious';
 }
 
 export interface BoatAttachment {
@@ -32,7 +32,7 @@ export interface BoatCertificate {
   date: string;
   title: string;
   expires?: string;
-  status: 'validated' | 'pending' | 'rejected';
+  status: 'validated' | 'pending' | 'rejected' | 'suspicious';
   description: string;
   attachments: BoatAttachment[];
 }
@@ -102,4 +102,18 @@ export interface BlockchainEventRow {
   ipfs_hash: string;
   tx_hash: string;
   block_number: number;
+}
+
+// DTO pour les certificats blockchain
+export interface BlockchainCertificateRow {
+  id: string;
+  boat_id: number;
+  cert_type: number; // 0 Insurance, 1 Technical, 2 Navigation, 3 Environmental
+  issuer: string;
+  issued_at: string; // ISO date
+  expires_at?: string; // ISO date
+  ipfs_hash: string;
+  tx_hash: string;
+  block_number: number;
+  validated: boolean;
 }
