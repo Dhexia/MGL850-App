@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,32 +7,35 @@ import {
   Alert,
   Image,
   ScrollView,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { useTheme } from '@/theme';
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { useTheme } from "@/theme";
 
 interface ImagePickerComponentProps {
   onImagesChange: (images: Array<{ uri: string; name: string }>) => void;
   maxImages?: number;
+  initialImages?: Array<{ uri: string; name: string }>;
 }
 
 export default function ImagePickerComponent({
   onImagesChange,
   maxImages = 5,
+  initialImages = [],
 }: ImagePickerComponentProps) {
   const theme = useTheme();
-  const [selectedImages, setSelectedImages] = useState<Array<{ uri: string; name: string }>>([]);
+  const [selectedImages, setSelectedImages] =
+    useState<Array<{ uri: string; name: string }>>(initialImages);
 
   const pickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Accès aux photos nécessaire');
+
+    if (status !== "granted") {
+      Alert.alert("Permission requise", "Accès aux photos nécessaire");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsMultipleSelection: true,
       quality: 0.8,
       selectionLimit: maxImages - selectedImages.length,
@@ -43,7 +46,7 @@ export default function ImagePickerComponent({
         uri: asset.uri,
         name: `image_${Date.now()}_${index}.jpg`,
       }));
-      
+
       const updatedImages = [...selectedImages, ...newImages];
       setSelectedImages(updatedImages);
       onImagesChange(updatedImages);
@@ -57,9 +60,6 @@ export default function ImagePickerComponent({
   };
 
   const styles = StyleSheet.create({
-    container: {
-      marginBottom: 20,
-    },
     title: {
       ...theme.textStyles.titleMedium,
       color: theme.colors.textDark,
@@ -69,21 +69,22 @@ export default function ImagePickerComponent({
       backgroundColor: theme.colors.primary,
       padding: 15,
       borderRadius: 10,
-      alignItems: 'center',
+      alignItems: "center",
       marginBottom: 15,
     },
     addButtonText: {
       ...theme.textStyles.bodyMedium,
       color: theme.colors.background,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     imagesContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+      flexDirection: "row",
+      flexWrap: "wrap",
       gap: 10,
+      paddingTop: 10,
     },
     imageContainer: {
-      position: 'relative',
+      position: "relative",
       width: 80,
       height: 80,
     },
@@ -93,20 +94,20 @@ export default function ImagePickerComponent({
       borderRadius: 8,
     },
     removeButton: {
-      position: 'absolute',
+      position: "absolute",
       top: -5,
       right: -5,
-      backgroundColor: theme.colors.error || '#ff4444',
+      backgroundColor: "#ff4444",
       borderRadius: 12,
       width: 24,
       height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     removeButtonText: {
-      color: 'white',
+      color: "white",
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: "bold",
     },
     counter: {
       ...theme.textStyles.bodySmall,
@@ -116,9 +117,9 @@ export default function ImagePickerComponent({
   });
 
   return (
-    <View style={styles.container}>
+    <View>
       <Text style={styles.title}>Photos du bateau</Text>
-      
+
       {selectedImages.length < maxImages && (
         <Pressable style={styles.addButton} onPress={pickImages}>
           <Text style={styles.addButtonText}>
@@ -146,7 +147,8 @@ export default function ImagePickerComponent({
       )}
 
       <Text style={styles.counter}>
-        {selectedImages.length} photo{selectedImages.length > 1 ? 's' : ''} sélectionnée{selectedImages.length > 1 ? 's' : ''}
+        {selectedImages.length} photo{selectedImages.length > 1 ? "s" : ""}{" "}
+        sélectionnée{selectedImages.length > 1 ? "s" : ""}
       </Text>
     </View>
   );
