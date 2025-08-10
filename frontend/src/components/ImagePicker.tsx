@@ -7,6 +7,7 @@ import {
   Alert,
   Image,
   ScrollView,
+  ImageSourcePropType,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "@/theme";
@@ -15,12 +16,14 @@ interface ImagePickerComponentProps {
   onImagesChange: (images: Array<{ uri: string; name: string }>) => void;
   maxImages?: number;
   initialImages?: Array<{ uri: string; name: string }>;
+  wrapMode: boolean;
 }
 
 export default function ImagePickerComponent({
   onImagesChange,
   maxImages = 5,
   initialImages = [],
+  wrapMode = false,
 }: ImagePickerComponentProps) {
   const theme = useTheme();
   const [selectedImages, setSelectedImages] =
@@ -116,6 +119,33 @@ export default function ImagePickerComponent({
     },
   });
 
+  const imagesDisplay = (selectedImages: ImageSourcePropType[]) => (
+    <View style={styles.imagesContainer}>
+      {selectedImages.map((image: ImageSourcePropType, index) => {
+        return (
+          <View key={index} style={styles.imageContainer}>
+            <Image source={image} style={styles.image} />
+            <Pressable
+              style={styles.removeButton}
+              onPress={() => removeImage(index)}
+            >
+              <Text style={styles.removeButtonText}>×</Text>
+            </Pressable>
+          </View>
+        );
+      })}
+    </View>
+  );
+
+  const modedContainer = (selectedImages: ImageSourcePropType[]) => {
+    if (wrapMode) return imagesDisplay(selectedImages);
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        imagesDisplay(selectedImages);
+      </ScrollView>
+    );
+  };
+
   return (
     <View>
       <Text style={styles.title}>Photos du bateau</Text>
@@ -128,23 +158,7 @@ export default function ImagePickerComponent({
         </Pressable>
       )}
 
-      {selectedImages.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.imagesContainer}>
-            {selectedImages.map((image, index) => (
-              <View key={index} style={styles.imageContainer}>
-                <Image source={{ uri: image.uri }} style={styles.image} />
-                <Pressable
-                  style={styles.removeButton}
-                  onPress={() => removeImage(index)}
-                >
-                  <Text style={styles.removeButtonText}>×</Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-      )}
+      {selectedImages.length > 0 && modedContainer(selectedImages)}
 
       <Text style={styles.counter}>
         {selectedImages.length} photo{selectedImages.length > 1 ? "s" : ""}{" "}

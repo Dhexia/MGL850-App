@@ -6,6 +6,7 @@ export interface BoatSpecification {
   name: string;
   city: string;
   postal_code: string;
+  for_sale: boolean;
   year: number;
   overall_length: number;
   width: number;

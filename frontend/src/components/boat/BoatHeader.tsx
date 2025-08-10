@@ -103,6 +103,7 @@ export default function BoatHeader({
               pathname: '/boats/edit-boat',
               params: {
                 boatId: boatId || '',
+                ownerId: ownerId,
                 specification: JSON.stringify(specification || {}),
                 images: JSON.stringify(images || []),
                 certificates: JSON.stringify(certificates || []),
