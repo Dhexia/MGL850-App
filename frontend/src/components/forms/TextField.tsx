@@ -51,7 +51,7 @@ const TextField = forwardRef<TextInput, TextFieldProps>(
           ref={ref}
           style={styles.input}
           returnKeyType={returnKeyType}
-          onSubmitEditing={e=>onSubmitEditing(e)}
+          onSubmitEditing={onSubmitEditing}
           {...props}
         />
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}

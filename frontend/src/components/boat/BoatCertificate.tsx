@@ -10,7 +10,7 @@ import PdfViewer from "../PdfViewer";
 
 interface CertificateData {
   id?: string;
-  person: string;
+  authorPubkey: string;
   date: string;
   status: "validated" | "pending" | "rejected" | "suspicious";
   title: string;
@@ -45,7 +45,7 @@ export default function BoatCertificate({
 
   if (showPdf) {
     console.log("Displaying pdf", pdfUri);
-    return <PdfViewer uri={pdfUri} setVisible={setShowPdf}/>;
+    return <PdfViewer uri={pdfUri} setVisible={setShowPdf} />;
   }
 
   const handleRevoke = () => {
@@ -146,7 +146,7 @@ export default function BoatCertificate({
         {/* TOP */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.person}>{certificateData.person}</Text>
+            <Text style={styles.person}>{certificateData.authorPubkey}</Text>
             <Text style={styles.date}>{certificateData.date}</Text>
           </View>
           <View>
