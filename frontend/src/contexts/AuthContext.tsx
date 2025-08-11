@@ -36,12 +36,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [userRole, setUserRole] = useState<UserRole>('standard_user');
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [mockAddress, setMockAddress] = useState<string>();
-  // Mock mode: Enable based on platform detection
-  const [isMockMode] = useState<boolean>(() => {
-    const canMock = PlatformUtils.canUseMockMode;
-    log('Mock mode enabled:', canMock, PlatformUtils.getEnvironmentInfo());
-    return canMock;
-  });
+  // Mock mode: Always enable for development testing
+  const isMockMode = __DEV__; // Always show mode selection in development
+  log('Mock mode enabled:', isMockMode, PlatformUtils.getEnvironmentInfo());
 
   // Force de nouveau login à chaque relance d'app pour éviter les tokens expirés
   useEffect(() => {

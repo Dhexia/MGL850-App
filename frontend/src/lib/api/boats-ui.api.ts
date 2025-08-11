@@ -4,18 +4,11 @@ import { ipfsToHttp, fetchJsonWithCache } from './ipfs.api';
 import { mapMetadataToSpec } from './transformers.api';
 import { blockchainEventToUIEvent } from './events.api';
 import { getCachedData, setCachedData, clearCache } from './cache.api';
-import { getMockBoats } from './mock-interceptor';
-import { PlatformUtils } from '../platform-utils';
 import type { UIBoat, BoatEvent } from '@/lib/boat.types';
 
 const CACHE_KEY_BOATS = 'boats_cache';
 
 export async function fetchBoatsFromBackend(): Promise<UIBoat[]> {
-  // En mode mock, retourner les données de test
-  if (PlatformUtils.canUseMockMode) {
-    console.log('🧐 Mock mode: Using test boats data');
-    return getMockBoats();
-  }
 
   // Check cache first
   const cachedBoats = await getCachedData<UIBoat[]>(CACHE_KEY_BOATS);

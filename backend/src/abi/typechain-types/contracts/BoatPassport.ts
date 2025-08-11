@@ -30,6 +30,7 @@ export interface BoatPassportInterface extends Interface {
       | "MINTER_ROLE"
       | "approve"
       | "balanceOf"
+      | "burn"
       | "getApproved"
       | "getRoleAdmin"
       | "grantRole"
@@ -77,6 +78,7 @@ export interface BoatPassportInterface extends Interface {
     functionFragment: "balanceOf",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "getApproved",
     values: [BigNumberish]
@@ -150,6 +152,7 @@ export interface BoatPassportInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
     data: BytesLike
@@ -395,6 +398,8 @@ export interface BoatPassport extends BaseContract {
 
   balanceOf: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
 
+  burn: TypedContractMethod<[tokenId: BigNumberish], [void], "nonpayable">;
+
   getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
 
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
@@ -498,6 +503,9 @@ export interface BoatPassport extends BaseContract {
   getFunction(
     nameOrSignature: "balanceOf"
   ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "burn"
+  ): TypedContractMethod<[tokenId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getApproved"
   ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;

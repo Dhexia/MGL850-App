@@ -7,6 +7,7 @@ import { CertificatesModule } from './modules/certificates/certificates.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DocumentModule } from './modules/document/document.module';
 import { IndexerModule } from './modules/indexer/indexer.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { IndexerModule } from './modules/indexer/indexer.module';
     AuthModule,
     DocumentModule,
     IndexerModule,
+    HealthModule,
   ],
   controllers: [],
 })

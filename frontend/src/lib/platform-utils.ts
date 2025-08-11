@@ -22,14 +22,9 @@ export const PlatformUtils = {
   // Environnement où on peut utiliser les mocks
   get canUseMockMode() {
     // Force mock mode for development testing
-    const forceMockMode = __DEV__ && true; // Change to false to disable
+    const forceMockMode = false; // Completely disabled
     
-    return forceMockMode || (
-      __DEV__ && (
-        Platform.OS === 'web' || 
-        this.isIOSSimulator
-      )
-    );
+    return forceMockMode;
   },
   
   // Info pour debug

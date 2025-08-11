@@ -42,6 +42,18 @@ contract BoatPassport is ERC721URIStorage, AccessControl {
     }
 
     /**
+     * @notice Burn un passeport de bateau.
+     * @param tokenId L'identifiant unique du passeport à brûler.
+     * @dev    Seuls les comptes avec le rôle DEFAULT_ADMIN_ROLE peuvent appeler cette fonction.
+     */
+    function burn(uint256 tokenId)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _burn(tokenId);
+    }
+
+    /**
      * @notice Indique si l'interface spécifiée est supportée.
      * @param interfaceId L'identifiant de l'interface à vérifier.
      * @return true si l'interface est supportée, false sinon.

@@ -1,6 +1,7 @@
 {
-  "BoatPassportModule#BoatPassport": "0x7b2D3E97A153d62e8306e14D690469C3e99BB468",
-  "RoleRegistryModule#RoleRegistry": "0xf0B2598Ea8e0EF26b32D0eF344160217bBbA44D8",
-  "BoatEventsModule#BoatEvents": "0x4AF1C8F15065c47eA26A02B4930035Cce2Ff5ecA",
-  "BoatCertificateModule#BoatCertificate": "0x3cE92d6D7e33399f2780FAd77aedD32411532970"
+  "BoatPassportModule#BoatPassport": "0xad490ec1C585AC18c3f2279E4186339619dBe679",
+  "RoleRegistryModule#RoleRegistry": "0x1358a2eb856fdb4318E23Fc5273d6750a595Ba95",
+  "AllContractsModule#BoatCertificate": "0xD8A6D58417BBa3a688aDD095203659bCA14cd9e0",
+  "BoatEventsModule#BoatEvents": "0xc1E22e8591dd112C5A02b8baEa20BbD330B66cb0",
+  "BoatCertificateModule#BoatCertificate": "0xf7924DDCb1d208b7183b2D08520626a9941Bc2EC"
 }
