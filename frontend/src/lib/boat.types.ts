@@ -29,7 +29,7 @@ export interface BoatAttachment {
 }
 
 export interface BoatCertificate {
-  person: string;
+  authorPubkey: string;
   date: string;
   title: string;
   expires?: string;

@@ -1,26 +1,24 @@
-import React from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-} from 'react-native';
-import { useTheme } from '@/theme';
-import BoatCertificate from './BoatCertificate';
+import React, { Dispatch, useState } from "react";
+import { View, StyleSheet, Text, TouchableOpacity, Modal } from "react-native";
+import { useTheme } from "@/theme";
+import BoatCertificatePicker from "./BoatCertificatePicker";
+import BoatCertificate from "./BoatCertificate";
+import * as types from "@/lib/boat.types";
+import BoatCertificateEditable from "./BoatCertificateEditable";
 
 interface BoatCertificatesSectionProps {
-  certificates: {
-    person: string;
-    date: string;
-    status: 'validated' | 'pending' | 'rejected';
-    title: string;
-    expires?: string;
-    description?: string;
-    attachments?: { title: string; uri: string }[];
-  }[];
+  isOwner: boolean;
+  certificates: types.BoatCertificate[];
 }
 
-export default function BoatCertificatesSection({ certificates }: BoatCertificatesSectionProps) {
+export default function BoatCertificatesSection({
+  isOwner,
+  certificates,
+}: BoatCertificatesSectionProps) {
   const theme = useTheme();
+  const [newCertificate, setNewCertificate] =
+    useState<types.BoatCertificate | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
 
   const styles = StyleSheet.create({
     certificatesContainer: {
@@ -30,15 +28,55 @@ export default function BoatCertificatesSection({ certificates }: BoatCertificat
     certificatesTitle: {
       color: theme.colors.textDark,
       ...theme.textStyles.titleMedium,
-      marginVertical: 15,
+      flex: 1,
+    },
+    button: {
+      borderRadius: 10,
+      padding: 5,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    buttonText: {
+      fontWeight: "bold",
     },
   });
 
+  const handleCertificatePicked = (cert: types.BoatCertificate) => {
+    setNewCertificate(cert);
+    setShowEditor(true);
+  };
+
+  console.log(certificates);
+
   return (
     <View style={styles.certificatesContainer}>
-      <View>
-        <Text style={styles.certificatesTitle}>🧾 Certificats disponibles</Text>
+      <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+        <Text style={styles.certificatesTitle}>🧾 Certificats</Text>
+        {isOwner && (
+          <BoatCertificatePicker
+            title="Ajouter"
+            setNewCertificate={handleCertificatePicked}
+          />
+        )}
       </View>
+      {/* Editor Modal */}
+      <Modal
+        visible={showEditor}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        {newCertificate && (
+          <BoatCertificateEditable
+            initialData={newCertificate}
+            onClose={() => setShowEditor(false)}
+            onSave={(updated) => {
+              certificates.push(updated);
+              setShowEditor(false);
+            }}
+            setData={setNewCertificate}
+          />
+        )}
+      </Modal>
       <View>
         {certificates?.map((certificate, idx) => (
           <BoatCertificate key={idx} certificateData={certificate} />
