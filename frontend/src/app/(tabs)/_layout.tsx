@@ -16,7 +16,6 @@ import {
     Image
 } from 'react-native';
 import RightDrawerContext from '@/contexts/RightDrawerContext';
-import {createDrawerNavigator} from '@react-navigation/drawer';
 import PageLayout from '@/components/PageLayout';
 import {useNavigationState} from '@react-navigation/native';
 import {useTheme} from "@/theme";
@@ -25,33 +24,28 @@ import BoatChainMainIcon
 import SettingsIcon from "@/assets/images/boatchainIcons/SettingsIcon.svg";
 import RessourcesIcon from "@/assets/images/boatchainIcons/RessourcesIcon.svg";
 import {Link} from "expo-router";
+import {useAuth} from "@/contexts/AuthContext";
 
 const Tab = createMaterialTopTabNavigator();
 
-const LeftDrawer = createDrawerNavigator();
-
 export default function Layout() {
+    const { address, userRole, isVerified } = useAuth();
 
+    // Format address for display (show first 6 and last 4 characters)
+    const formatAddress = (addr: string | undefined) => {
+        if (!addr) return "Déconnecté";
+        return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    };
 
-    // !!!!!!!!!!!!!!!!
-    // TODO : Interactive user profile
-    // !!!!!!!!!!!!!!!!
+    // Get user display name based on role
+    const getUserDisplayName = () => {
+        if (isVerified) return "Certificateur";
+        return "Utilisateur";
+    };
 
     const userInfo = {
-        name: "Alan Retailleau",
-        hash: "0x98Fb...31Cc",
-        followedBoats: [
-            {
-                imageUri: "http://192.168.2.10:5000/images/1/1_001.jpg",
-                name: "Sun Odyssey 349",
-                link: ""
-            },
-            {
-                imageUri: "http://192.168.2.10:5000/images/2/1_001.jpg",
-                name: "Sun Odyssey 349 bis",
-                link: ""
-            }
-        ]
+        name: getUserDisplayName(),
+        hash: formatAddress(address),
     }
 
     const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
@@ -206,16 +200,6 @@ export default function Layout() {
                                 </Text>
                             </View>
                         </Link>
-                        <View style={rightDrawerStyle.items}>
-                            <View style={rightDrawerStyle.itemIconView}>
-                                <SettingsIcon
-                                    style={rightDrawerStyle.itemIcon}
-                                />
-                            </View>
-                            <Text style={rightDrawerStyle.itemTitle}>
-                                Paramètres
-                            </Text>
-                        </View>
                         <Link
                             href={"/ressources/useful_ressources"}
                              style={rightDrawerStyle.items}
@@ -232,53 +216,11 @@ export default function Layout() {
                             </View>
                         </Link>
                     </View>
-                    <View style={rightDrawerStyle.followedBoatsContainer}>
-                        <View style={rightDrawerStyle.followedBoatsHeader}>
-                            <Text
-                                style={rightDrawerStyle.followedBoatsTitle}
-                            >
-                                Suivi
-                            </Text>
-                        </View>
-                        {userInfo.followedBoats.map((boat, idx) => (
-                            <View key={idx}
-                                  style={rightDrawerStyle.followItem}>
-                                <Image
-                                    source={{uri: boat.imageUri}}
-                                    style={rightDrawerStyle.followImage}
-                                    resizeMode="cover"
-                                />
-                                <Text
-                                    style={rightDrawerStyle.itemTitle}>{boat.name}</Text>
-                            </View>
-                        ))}
-                    </View>
                 </View>
             )}
         >
             <RightDrawerContext.Provider value={contextValue}>
-                <LeftDrawer.Navigator
-                    screenOptions={{
-                        drawerPosition: 'left',
-                        headerShown: false,
-                        drawerStyle: {
-                            width: Platform.OS === 'web' ? '20%' : '66%',
-                            minWidth: Platform.OS === 'web' ? 300 : undefined,
-                        },
-                    }}
-                    drawerContent={() => (
-                        <View style={styles.drawer}>
-                            <View>
-                                <Text
-                                    style={styles.drawerTitle}>Notifications</Text>
-                            </View>
-
-                        </View>
-                    )}>
-                    <LeftDrawer.Screen name="Tabs" component={TabNavigator}/>
-                </LeftDrawer.Navigator>
-
-
+                <TabNavigator />
             </RightDrawerContext.Provider>
         </RightDrawer>
     );

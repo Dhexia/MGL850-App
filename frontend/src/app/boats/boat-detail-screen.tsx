@@ -26,8 +26,8 @@ export default function BoatDetailScreen() {
     events: string;
   }>();
 
-  const specification = JSON.parse(specString);
-  const images = JSON.parse(imgString);
+  const specification = specString ? JSON.parse(specString) : {};
+  const images = imgString ? JSON.parse(imgString) : [];
   const certificates = certString ? JSON.parse(certString) : [];
   const eventsData = eventsString ? JSON.parse(eventsString) : [];
   const { address, userRole } = useAuth();
@@ -75,7 +75,12 @@ export default function BoatDetailScreen() {
           isOwner={isOwner}
         />
 
-        <BoatEventsSection events={eventsData} />
+        <BoatEventsSection 
+          events={eventsData} 
+          isOwner={isOwner}
+          boatId={boatId}
+          ownerId={ownerId}
+        />
       </View>
     </ScrollView>
   );

@@ -5,7 +5,7 @@ Documentation complete des APIs backend pour l'equipe frontend. Ce guide contien
 ## Configuration de Base
 
 ```typescript
-const API_BASE_URL = 'http://localhost:3000'
+const API_BASE_URL = 'http://localhost:8080'
 
 const headers = {
   'Content-Type': 'application/json',

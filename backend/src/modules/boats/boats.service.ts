@@ -88,6 +88,14 @@ export class BoatsService {
   }
 
   /* ------------------------------------------------------------------ */
+  /* Suppression de passeport (NFT)                                      */
+  /* ------------------------------------------------------------------ */
+  async burnPassport(tokenId: number, fromAddress?: string) {
+    // ChainService renvoie { txHash }
+    return this.chain.burnPassport(tokenId, fromAddress);
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Upload d'images via Cloudinary                                      */
   /* ------------------------------------------------------------------ */
   async uploadImages(files: Express.Multer.File[]): Promise<{ images: Array<{ url: string; public_id: string }> }> {

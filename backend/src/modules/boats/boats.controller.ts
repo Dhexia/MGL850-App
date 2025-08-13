@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Body,
   ParseIntPipe,
@@ -61,5 +62,13 @@ export class BoatsController {
   async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
     this.logger.log(`📸 Uploading ${files?.length || 0} images`);
     return this.boats.uploadImages(files);
+  }
+
+  /** Brûle un passeport de bateau */
+  @Delete(':id')
+  async burnBoat(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const caller = req.user?.address;
+    this.logger.log(`🔥 Burning boat passport #${id} (caller: ${caller})`);
+    return this.boats.burnPassport(id, caller);
   }
 }

@@ -161,6 +161,16 @@ export class ChainService {
     return { txHash: tx.hash, tokenId };
   }
 
+  /** Brûle un passeport et retourne { txHash } */
+  async burnPassport(tokenId: number, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const tx = await this.boatPassport.connect(signer).burn(tokenId);
+    this.log.log(`burn tx sent: ${tx.hash} → tokenId=${tokenId}`);
+    await tx.wait();
+    this.log.log(`burn success: tokenId=${tokenId}`);
+    return { txHash: tx.hash };
+  }
+
   /** Ajoute un événement on-chain et retourne { txHash } */
   async addEventTx(boatId: number, kind: number, ipfsHash: string, fromAddress?: string) {
     const signer = this.getSigner(fromAddress);
