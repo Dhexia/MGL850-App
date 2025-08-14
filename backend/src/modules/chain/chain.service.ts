@@ -20,31 +20,39 @@ import {
 export class ChainService {
   private readonly log = new Logger(ChainService.name);
 
+  // Provider pour les opérations de lecture blockchain (appels en lecture seule)
   private readonly provider: ethers.JsonRpcProvider;
+  // Signer principal pour les transactions nécessitant une signature
   private readonly signer: ethers.Wallet;
+  // Map des signers pour les comptes de développement (mode test uniquement)
   private readonly devSigners: Map<string, ethers.Wallet> = new Map();
 
+  // Instances des smart contracts connectées au provider pour les opérations de lecture
   private readonly boatEvents: BoatEvents;
   private readonly boatPassport: BoatPassport;
   private readonly roleRegistry: RoleRegistry;
   private readonly boatCertificate: BoatCertificate;
 
   constructor(private readonly cfg: ConfigService) {
-    // lecture / écriture
+    // Initialisation du provider JSON-RPC pour communiquer avec le réseau Sepolia
     this.provider = new ethers.JsonRpcProvider(
       this.cfg.getOrThrow<string>('SEPOLIA_RPC_URL'),
     );
+    
+    // Création du wallet principal avec la clé privée pour signer les transactions
     this.signer = new ethers.Wallet(
       this.cfg.getOrThrow<string>('PRIVATE_KEY'),
       this.provider,
     );
 
-    // Initialiser les signers des comptes de développement
+    // Initialiser les signers des comptes de développement pour les tests
     if (isDevMode()) {
       this.initializeDevSigners();
     }
 
-    // contrats (lecture via provider; écriture via connect(signer))
+    // Connexion aux smart contracts déployés sur le réseau
+    // Les contrats sont initialisés en lecture seule (provider)
+    // Pour l'écriture, ils seront connectés avec un signer via .connect()
     this.boatEvents = BoatEvents__factory.connect(
       this.cfg.getOrThrow<string>('BOAT_EVENTS_ADDRESS'),
       this.provider,

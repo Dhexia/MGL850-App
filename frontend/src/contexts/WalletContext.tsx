@@ -1,4 +1,4 @@
-// src/contexts/WalletContext.tsx — with debug logs v2
+// src/contexts/WalletContext.tsx — WalletConnect integration for BoatChain
 import React, {
   createContext,
   useContext,
@@ -15,20 +15,21 @@ import {
   useWalletConnectModal,
 } from '@walletconnect/modal-react-native';
 
-// Simple logger
+// Logger simple pour le debugging des connexions wallet
 const log = (...a: any[]) => console.log('[Wallet]', ...a);
 
+// Interface du contexte wallet exposée aux composants
 export type WalletCtx = {
-  address?: string;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  personalSign: (message: string) => Promise<string>;
-  isConnected: boolean;
-  waitForSession: () => Promise<void>;
-  getFreshAddress: () => string | undefined;
-  getSelectedAddress: () => Promise<string | undefined>;
-  requestAccounts: () => Promise<string | undefined>;
-  ecRecover: (message: string, signature: string) => Promise<string | undefined>; // debug helper
+  address?: string;                                           // Adresse du wallet connecté
+  connect: () => Promise<void>;                               // Initie la connexion WalletConnect
+  disconnect: () => Promise<void>;                            // Déconnecte le wallet
+  personalSign: (message: string) => Promise<string>;        // Signe un message (pour auth nonce)
+  isConnected: boolean;                                       // État de connexion WalletConnect
+  waitForSession: () => Promise<void>;                        // Attend que la session soit prête
+  getFreshAddress: () => string | undefined;                 // Récupère l'adresse depuis la session
+  getSelectedAddress: () => Promise<string | undefined>;     // Appel eth_accounts via WC
+  requestAccounts: () => Promise<string | undefined>;        // Demande l'accès aux comptes
+  ecRecover: (message: string, signature: string) => Promise<string | undefined>; // Helper debug: récupère le signataire
 };
 
 const Ctx = createContext<WalletCtx | null>(null);
@@ -38,35 +39,42 @@ export const useWallet = () => {
   return v;
 };
 
-// Config via expo.extra
+// Configuration WalletConnect via expo.extra (app.json)
 const EX = (Constants.expoConfig?.extra ?? {}) as {
-  wcProjectId?: string;
-  chainId?: number;
-  appUrl?: string;
-  appName?: string;
+  wcProjectId?: string;    // Project ID WalletConnect
+  chainId?: number;        // ID du réseau blockchain (Sepolia = 11155111)
+  appUrl?: string;         // URL de l'app pour les redirections
+  appName?: string;        // Nom affiché dans WalletConnect
 };
 const PROJECT_ID = EX.wcProjectId ?? '';
-const CHAIN_DEC = EX.chainId ?? 11155111; // Sepolia par défaut
-const CHAIN_NS = `eip155:${CHAIN_DEC}`;
+const CHAIN_DEC = EX.chainId ?? 11155111; // Sepolia testnet par défaut
+const CHAIN_NS = `eip155:${CHAIN_DEC}`;   // Format namespace EIP-155
 
+// Extrait l'adresse Ethereum depuis le format account WalletConnect
+// Format: "eip155:11155111:0x1234..." -> "0x1234..."
 function addrFromSessionAccount(account?: string): string | undefined {
   if (!account) return;
   const parts = account.split(':');
   return parts[2]?.toLowerCase();
 }
+
+// Normalise l'adresse depuis les events (déjà au format 0x...)
 function addrFromEvent(account?: string): string | undefined {
   return account?.toLowerCase();
 }
 
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  // Hook WalletConnect pour gérer la modal et le provider
   const { open, provider, isConnected, close } = useWalletConnectModal();
+  // State local de l'adresse connectée (sync avec WalletConnect)
   const [address, setAddress] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     log('mount provider=', Boolean(provider), 'projectId=', PROJECT_ID, 'chain=', CHAIN_DEC);
   }, []);
 
-  // Promesse résolue quand la session est prête (évite les courses)
+  // Système de promesses pour gérer l'attente de session WalletConnect
+  // Évite les conditions de course entre connexion et utilisation
   const readyResolveRef = useRef<(() => void) | null>(null);
   const readyPromiseRef = useRef<Promise<void> | null>(null);
   const resetReadyPromise = useCallback(() => {
@@ -77,12 +85,14 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
   useEffect(() => { resetReadyPromise(); }, [resetReadyPromise]);
 
-  // Mise à jour depuis la session WC
+  // Synchronise l'état local avec la session WalletConnect active
   const updateFromSession = useCallback(() => {
     const acc = provider?.session?.namespaces?.eip155?.accounts?.[0];
     const addr = addrFromSessionAccount(acc);
     log('updateFromSession acc=', acc, 'addr=', addr);
     setAddress(addr);
+    
+    // Résout la promesse d'attente si session prête et adresse disponible
     if (provider?.session?.topic && addr && readyResolveRef.current) {
       readyResolveRef.current();
       readyResolveRef.current = null;

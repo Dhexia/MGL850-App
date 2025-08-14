@@ -73,35 +73,45 @@ contract BoatEvents {
         EventKind kind,
         string    calldata ipfsHash
     ) external {
-        // Vérifie d’abord que le bateau existe
+        // Vérifie d'abord que le bateau existe en tentant de récupérer son propriétaire
+        // Si le bateau n'existe pas, ownerOf() lèvera une exception
         require(passport.ownerOf(boatId) != address(0), "Unknown boat");
 
-        // Imposer les rôles selon la catégorie
+        // Contrôle d'accès basé sur le type d'événement pour garantir l'intégrité des données
         if (kind == EventKind.Repair || kind == EventKind.Inspection) {
+            // Seuls les professionnels certifiés peuvent enregistrer des réparations/inspections
+            // Cela garantit la qualité et la fiabilité des informations techniques
             require(
                 roles.isProfessional(msg.sender),
                 "Only certified pro"
             );
         } else if (kind == EventKind.Incident) {
+            // Vérification que l'appelant est bien le propriétaire du bateau
             bool isOwner = passport.ownerOf(boatId) == msg.sender;
-            // Seuls les propriétaires peuvent déclarer des incidents
+            // Seuls les propriétaires peuvent déclarer des incidents pour éviter les fausses déclarations
             require(isOwner, "Only owner can log incidents");
         } else if (kind == EventKind.Sale) {
+            // Pour les ventes, seul le propriétaire actuel peut enregistrer la transaction
+            // Cela empêche les ventes frauduleuses ou non autorisées
             require(
                 passport.ownerOf(boatId) == msg.sender,
                 "Only owner may log sale"
             );
         }
 
+        // Ajout de l'événement à l'historique avec timestamp automatique
+        // L'utilisation de block.timestamp assure une horodatage immuable
         _history[boatId].push(
             EventData({
                 kind: kind,
-                timestamp: block.timestamp,
-                author: msg.sender,
-                ipfsHash: ipfsHash
+                timestamp: block.timestamp, // Timestamp Unix du bloc actuel
+                author: msg.sender,         // Adresse de l'auteur de l'événement
+                ipfsHash: ipfsHash          // Hash IPFS contenant les détails/preuves
             })
         );
 
+        // Émission d'un événement pour l'indexation off-chain et les notifications
+        // Permet aux services externes de réagir aux nouveaux événements en temps réel
         emit BoatEventLogged(boatId, kind, msg.sender, ipfsHash);
     }
 
