@@ -1,6 +1,6 @@
 # BoatChain - DApp de gestion, achat et vente de bateaux
 
-BoatChain est une application décentralisée (DApp) basée sur la blockchain Ethereum qui permet la gestion, l'achat et la vente de bateaux avec un système de passeports numériques et de traçabilité complète.
+BoatChain est une application décentralisée (DApp) basée sur la blockchain Ethereum qui permet la gestion, l'achat et la vente de bateaux avec un système de passeports numériques, de traçabilité complète et de communication intégrée.
 
 ## Architecture du projet
 
@@ -28,21 +28,28 @@ BoatChain est une application décentralisée (DApp) basée sur la blockchain Et
 ```
 backend/src/
 ├── modules/
-│   ├── shared/dto/           # DTOs et enums communs
-│   ├── boats/               # Gestion bateaux uniquement
-│   ├── events/              # Gestion événements + validation
-│   ├── certificates/        # Gestion certificats + validation
-│   ├── auth/               # Authentification (existant)
+│   ├── auth/               # Authentification JWT + wallet
+│   ├── boats/              # Gestion bateaux + NFT
+│   ├── events/             # Gestion événements + validation
+│   ├── certificates/       # Gestion certificats + validation
+│   ├── chat/               # Système de messagerie P2P
 │   ├── chain/              # Intégration blockchain
+│   ├── cloudinary/         # Upload images
+│   ├── document/           # Upload IPFS
 │   └── indexer/            # Indexation PostgreSQL
+├── health/                 # Endpoints de santé + nettoyage
+└── common/                 # Interceptors et utilitaires
 ```
 
 ### Responsabilités séparées
 
+- **Auth** : Authentification wallet + JWT
 - **Boats** : Mint NFT, liste, détails, upload images
 - **Events** : CRUD événements, workflow validation
 - **Certificates** : CRUD certificats, validation professionnelle
-- **Shared** : Types communs réutilisables
+- **Chat** : Messagerie P2P, offres d'achat, négociation
+- **Chain** : Intégration smart contracts
+- **Health** : Monitoring + endpoints de nettoyage
 
 ---
 
@@ -120,31 +127,37 @@ PUT  /certificates/:id/validate     → ValidateDto { status: Status }
 GET  /certificates/pending          → Certificats en attente de validation
 ```
 
-### Routes documents (legacy)
+### Routes chat (module chat)
 ```typescript
-POST /documents/boats/:id/events   → ⚠️ DEPRECATED - Utiliser /events
+POST /chat/conversations           → Créer conversation P2P
+GET  /chat/conversations           → Liste conversations utilisateur
+GET  /chat/conversations/:id       → Détails conversation
+POST /chat/messages                → Envoyer message
+POST /chat/conversations/:id/offer → Envoyer offre d'achat
+POST /chat/conversations/:id/offer/accept → Accepter offre
+```
+
+### Routes documents et santé
+```typescript
 POST /documents/upload-json        → Upload JSON vers IPFS
+GET  /health                       → Status système + contrats
+DELETE /health/chat-all            → Nettoyer toutes les conversations
+DELETE /health/chat-messages       → Nettoyer messages uniquement
+GET  /health/chat-stats            → Statistiques chat
 ```
 
 ---
 
 ## 📊 Structure des DTOs
 
-### DTOs partagés (`shared/dto/`)
-
-| Fichier | Description | Utilisation |
-|---------|-------------|-------------|
-| **enums.ts** | EventKind, Status, CertificateType | Types communs |
-| **attachment.dto.ts** | Pièces jointes | Événements & certificats |
-| **validation.dto.ts** | ValidateDto générique | Validation par certificateurs |
-
-### DTOs spécialisés
+### DTOs par module
 
 | Module | DTOs | Responsabilité |
 |--------|------|----------------|
-| **boats/** | CreateBoatDto, BoatResponseDto | Gestion bateaux uniquement |
+| **boats/** | CreateBoatDto, BoatResponseDto | Gestion bateaux + NFT |
 | **events/** | CreateEventDto, EventResponseDto | Événements + workflow validation |
 | **certificates/** | CreateCertificateDto, CertificateResponseDto | Certificats + validation pro |
+| **chat/** | CreateConversationDto, ConversationResponseDto, SendMessageDto | Messages P2P + offres |
 
 ### Validation automatique
 - **class-validator** pour validation stricte
@@ -346,44 +359,45 @@ CREATE TABLE certificates (
 
 ### Commandes de développement
 
-#### Smart Contracts avec BoatCertificate
+#### Smart Contracts
 ```bash
 cd boatchain-contracts
 npm install
-npx hardhat compile                                    # Génère types TypeScript
+npx hardhat compile                           # Génère types TypeScript
 npx hardhat ignition deploy ignition/modules/BoatCertificate.js --network sepolia
-cp -r typechain-types/* ../backend/src/abi/typechain-types/  # Copier types backend
 ```
 
-#### Backend modulaire
+#### Backend (port 8080)
 ```bash
 cd backend
 npm install
-npm run start:dev    # Architecture modulaire : boats/events/certificates
+npm run start:dev    # Démarre sur http://localhost:8080
+npm run build       # Build production
+npm run lint        # ESLint avec auto-fix
+npm run test        # Tests unitaires Jest
+npm run seed:boats  # Peuple la DB avec vrais données bateaux
 ```
 
-#### Frontend React Native
+#### Frontend React Native/Expo
 ```bash
 cd frontend
 npm install
-npm start           # Serveur Expo dev avec cache intelligent
-npm run android     # Build Android avec optimisations
+npm start           # Serveur Expo dev
+npm run android     # Build Android
 npm run ios         # Build iOS 
-npm run web         # Version web pour tests
-npm run lint        # ESLint avec règles React Native
+npm run web         # Version web
+npm run lint        # ESLint Expo
 ```
 
-**Modes de développement** :
+#### Endpoints utiles
 ```bash
-# Mode développement avec cache et mock data
-npm start           # Cache AsyncStorage + données mock automatiques
+# Health checks
+curl http://localhost:8080/health                    # Status système
+curl http://localhost:8080/health/chat-stats         # Stats chat
 
-# Test performance cache
-# Le cache se vide automatiquement après 5 minutes
-# Mock mode actif si pas de backend accessible
-
-# Build production pour tester vraies performances
-npx expo run:android --variant release
+# Nettoyage développement  
+curl -X DELETE http://localhost:8080/health/chat-all # Vider conversations
+curl -X DELETE http://localhost:8080/health/all-boats # Vider bateaux
 ```
 
 ---
@@ -392,19 +406,19 @@ npx expo run:android --variant release
 
 ### Endpoints testables (Postman)
 
-**Architecture modulaire** :
-1. ✅ `POST /boats` - Mint avec CreateBoatDto
+**API Complète** :
+1. ✅ `POST /boats` - Mint NFT avec CreateBoatDto
 2. ✅ `POST /events` - Événements avec EventKind validation  
 3. ✅ `POST /certificates` - Certificats avec CertificateType
-4. ✅ `PUT /events/:boatId/:txHash/validate` - Validation par certificateurs
-5. ✅ `PUT /certificates/:id/validate` - Validation certificats
-6. ✅ `GET /events/pending`, `GET /certificates/pending` - File d'attente
+4. ✅ `POST /chat/conversations` - Conversations P2P
+5. ✅ `POST /chat/messages` - Messages + offres d'achat
+6. ✅ `PUT /events/:boatId/:txHash/validate` - Validation par certificateurs
+7. ✅ `DELETE /health/chat-all` - Nettoyage développement
 
-### Workflow complet testé
-- ✅ Utilisateur crée événement → statut `pending`
-- ✅ Certificateur valide → statut `validated`
-- ✅ Données synchronisées blockchain ↔ PostgreSQL
-- ✅ Types TypeScript cohérents frontend/backend
+### Base de données Supabase
+- ✅ Tables : boats, events, certificates, conversations, messages
+- ✅ Indexation temps réel via IndexerService
+- ✅ Types synchronisés backend ↔ frontend
 
 ---
 
