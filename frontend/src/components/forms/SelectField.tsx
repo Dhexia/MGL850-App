@@ -105,7 +105,12 @@ export default function SelectField({
         placeholder={{ label: placeholder, value: "" }}
         items={options}
         value={value}
-        onValueChange={onValueChange}
+        onValueChange={(value) => {
+          // Protéger contre les valeurs null/undefined
+          if (value !== null && value !== undefined) {
+            onValueChange(value);
+          }
+        }}
         style={{
           inputIOS: { height: 0, width: 0, opacity: 0 },
           inputAndroid: { height: 0, width: 0, opacity: 0 },

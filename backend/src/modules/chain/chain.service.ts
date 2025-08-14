@@ -8,11 +8,13 @@ import {
   BoatPassport__factory,
   RoleRegistry__factory,
   BoatCertificate__factory,
+} from '../../abi/factories/contracts';
+import {
   BoatEvents,
   BoatPassport,
   RoleRegistry,
   BoatCertificate,
-} from '../../abi/typechain-types';
+} from '../../abi/contracts';
 
 @Injectable()
 export class ChainService {
@@ -94,6 +96,16 @@ export class ChainService {
   }
 
   async isCertifiedProfessional(address: string) {
+    // En mode développement, vérifier d'abord les comptes de dev
+    if (isDevMode()) {
+      const devAccount = getDevAccountByAddress(address);
+      if (devAccount && devAccount.role === 'certifier') {
+        this.log.debug(`Dev mode: ${address} is certified professional (${devAccount.name})`);
+        return true;
+      }
+    }
+    
+    // Vérification on-chain pour les comptes réels
     return this.roleRegistry.isProfessional(address);
   }
 
@@ -171,6 +183,21 @@ export class ChainService {
     return { txHash: tx.hash };
   }
 
+  /** Met à jour le tokenURI d'un passeport et retourne { txHash } */
+  async updateTokenURI(tokenId: number, newUri: string, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    
+    // Force gas limit pour éviter l'estimation qui échoue
+    const tx = await this.boatPassport.connect(signer).setTokenURI(tokenId, newUri, {
+      gasLimit: 200000n // Gas fixe élevé
+    });
+    
+    this.log.log(`updateTokenURI tx sent: ${tx.hash} → tokenId=${tokenId}, newUri=${newUri}`);
+    await tx.wait();
+    this.log.log(`updateTokenURI success: tokenId=${tokenId}`);
+    return { txHash: tx.hash };
+  }
+
   /** Ajoute un événement on-chain et retourne { txHash } */
   async addEventTx(boatId: number, kind: number, ipfsHash: string, fromAddress?: string) {
     const signer = this.getSigner(fromAddress);
@@ -232,5 +259,153 @@ export class ChainService {
    */
   async isCertificateValid(certificateId: number): Promise<boolean> {
     return this.boatCertificate.isCertificateValid(certificateId);
+  }
+
+  /**
+   * Certifie un bateau en créant un certificat de validation générale
+   */
+  async certifyBoat(boatId: number, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const contract = this.boatCertificate.connect(signer);
+    
+    // Créer un certificat de type "validation_generale" 
+    const tx = await contract.issueCertificate(
+      boatId,
+      "validation_generale", 
+      "certified", // IPFS hash simple pour indiquer la certification
+      0 // Pas d'expiration
+    );
+    
+    this.log.log(`certifyBoat tx sent: ${tx.hash} → boat=${boatId}`);
+    const receipt = await tx.wait();
+    
+    // Récupérer l'ID du certificat depuis l'event
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = this.boatCertificate.interface.parseLog(log);
+        return parsed.name === 'CertificateIssued';
+      } catch {
+        return false;
+      }
+    });
+    
+    let certificateId = null;
+    if (event) {
+      const parsed = this.boatCertificate.interface.parseLog(event);
+      certificateId = parsed.args[0].toString();
+      
+      // Valider automatiquement le certificat
+      const validateTx = await contract.validateCertificate(certificateId, true);
+      await validateTx.wait();
+      this.log.log(`Certificate ${certificateId} validated for boat ${boatId}`);
+    }
+    
+    return { txHash: tx.hash, certificateId };
+  }
+
+  /**
+   * Transfère la propriété d'un bateau NFT
+   */
+  async transferBoatOwnership(tokenId: number, toAddress: string, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const contract = this.boatPassport.connect(signer);
+    
+    // Obtenir l'adresse du propriétaire actuel
+    const currentOwner = await contract.ownerOf(tokenId);
+    
+    // Effectuer le transfert
+    const tx = await contract.transferFrom(currentOwner, toAddress, tokenId);
+    
+    this.log.log(`transferBoatOwnership tx sent: ${tx.hash} → boat=${tokenId} from=${currentOwner} to=${toAddress}`);
+    return { txHash: tx.hash, from: currentOwner, to: toAddress };
+  }
+
+  /**
+   * Révoque la certification d'un bateau
+   */
+  async revokeBoatCertification(boatId: number, fromAddress?: string) {
+    const signer = this.getSigner(fromAddress);
+    const contract = this.boatCertificate.connect(signer);
+    
+    // Récupérer tous les certificats du bateau
+    const certificateIds = await contract.getBoatCertificates(boatId);
+    
+    let revokedCount = 0;
+    let lastTxHash = '';
+    
+    // Révoquer tous les certificats de validation générale
+    for (const certId of certificateIds) {
+      const cert = await contract.getCertificate(certId);
+      if (cert.certificateType === "validation_generale" && cert.isValid) {
+        const tx = await contract.revokeCertificate(certId);
+        await tx.wait();
+        lastTxHash = tx.hash;
+        revokedCount++;
+        this.log.log(`Certificate ${certId} revoked for boat ${boatId}`);
+      }
+    }
+    
+    return { txHash: lastTxHash, revokedCount };
+  }
+
+  /**
+   * Vérifie si un bateau est certifié (a au moins un certificat de validation valide)
+   */
+  async isBoatCertified(boatId: number): Promise<boolean> {
+    try {
+      const certificateIds = await this.boatCertificate.getBoatCertificates(boatId);
+      
+      for (const certId of certificateIds) {
+        const cert = await this.boatCertificate.getCertificate(certId);
+        if (cert.certificateType === "validation_generale" && cert.isValid) {
+          // Vérifier si le certificat n'est pas expiré
+          const isValid = await this.boatCertificate.isCertificateValid(certId);
+          if (isValid) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (error) {
+      this.log.warn(`Error checking boat ${boatId} certification: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Obtient le statut de certification d'un bateau
+   */
+  async getBoatCertificationStatus(boatId: number): Promise<'validated' | 'pending' | 'rejected'> {
+    try {
+      const isCertified = await this.isBoatCertified(boatId);
+      if (isCertified) {
+        return 'validated';
+      }
+      
+      // Vérifier s'il y a des certificats en attente ou rejetés
+      const certificateIds = await this.boatCertificate.getBoatCertificates(boatId);
+      
+      let hasPending = false;
+      let hasRejected = false;
+      
+      for (const certId of certificateIds) {
+        const cert = await this.boatCertificate.getCertificate(certId);
+        if (cert.certificateType === "validation_generale") {
+          if (cert.validatedAt.toString() === '0') {
+            hasPending = true;
+          } else if (!cert.isValid) {
+            hasRejected = true;
+          }
+        }
+      }
+      
+      if (hasRejected) return 'rejected';
+      if (hasPending) return 'pending';
+      
+      return 'pending'; // Par défaut
+    } catch (error) {
+      this.log.warn(`Error getting boat ${boatId} status: ${error.message}`);
+      return 'pending';
+    }
   }
 }

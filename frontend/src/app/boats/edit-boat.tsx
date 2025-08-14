@@ -18,6 +18,8 @@ import ImagePicker from "@/components/ImagePicker";
 import HeaderWithTitle from "@/components/HeaderWithTitle";
 import { createEditBoatStyles } from "@/styles/EditBoatScreen.style";
 import { BoatIPFSData, BoatSpecification } from "@/lib/boat.types";
+import { uploadBoatDataToIPFS, updateBoatURI } from "@/lib/api/boats.api";
+import { clearBoatsCache } from "@/lib/boats.api";
 
 export default function EditBoatScreen() {
   const {
@@ -160,12 +162,21 @@ export default function EditBoatScreen() {
         events: [],
         images: images,
       };
-      //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      //   TODO : send data to finalize update
-      //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      //   const res2 = await uploadBoatDataToIPFS(boatIPFSData);
+      // Upload updated boat data to IPFS
+      console.log('[edit-boat] Uploading updated boat data to IPFS...', boatIPFSData);
+      const { ipfsHash } = await uploadBoatDataToIPFS(boatIPFSData);
+      const uri = `ipfs://${ipfsHash}`;
+      console.log('[edit-boat] IPFS uploaded, uri=', uri);
 
-      Alert.alert("Succès", "Les modifications ont été sauvegardées.", [
+      // Update the boat's tokenURI on the blockchain
+      console.log('[edit-boat] Updating tokenURI on blockchain...', boatId, uri);
+      const updateResult = await updateBoatURI(parseInt(boatId), uri);
+      console.log('[edit-boat] Blockchain updated, txHash=', updateResult.txHash);
+      
+      // Clear cache to ensure fresh data is loaded
+      await clearBoatsCache();
+
+      Alert.alert("Succès", `Les modifications ont été sauvegardées !\nTransaction: ${updateResult.txHash}`, [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {

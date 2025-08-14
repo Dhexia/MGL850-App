@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView} from 'react-native';
 import {useRouter} from "expo-router";
 import {useTheme} from "@/theme";
 import Entypo from '@expo/vector-icons/Entypo';
@@ -17,7 +17,6 @@ export default function Dashboard() {
     const [boats, setBoats] = useState<UIBoat[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [ethPrice, setEthPrice] = useState<number | null>(null);
 
     const fetchAllBoats = useCallback(async (forceRefresh = false) => {
         try {
@@ -49,23 +48,6 @@ export default function Dashboard() {
         }, [fetchAllBoats])
     );
 
-    // Récupérer le cours de l'ETH
-    const fetchEthPrice = useCallback(async () => {
-        try {
-            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-            const data = await response.json();
-            setEthPrice(data.ethereum.usd);
-        } catch (error) {
-            console.error('Error fetching ETH price:', error);
-            setEthPrice(null);
-        }
-    }, []);
-
-    useFocusEffect(
-        useCallback(() => {
-            fetchEthPrice();
-        }, [fetchEthPrice])
-    );
 
     const styles = StyleSheet.create({
         container: {
@@ -74,34 +56,11 @@ export default function Dashboard() {
             padding: 16,
         },
 
-        // ETH Price Section
-        priceContainer: {
-            backgroundColor: theme.colors.surfaceLight,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: theme.colors.neutral,
-            padding: 20,
-            alignItems: 'center',
-            marginBottom: 24,
-        },
-        priceLabel: {
-            ...theme.textStyles.bodyMedium,
-            color: theme.colors.textLight,
-        },
-        priceValue: {
-            ...theme.textStyles.titleLarge,
-            color: theme.colors.textDark,
-            fontWeight: 'bold',
-            marginVertical: 8,
-        },
-        priceSubtitle: {
-            ...theme.textStyles.bodySmall,
-            color: theme.colors.textLight,
-        },
 
         // My Boats Section
         myBoatsContainer: {
             flex: 1,
+            paddingTop: 20,
         },
         sectionHeader: {
             flexDirection: 'row',
@@ -151,10 +110,15 @@ export default function Dashboard() {
         boatName: {
             ...theme.textStyles.titleMedium,
             color: theme.colors.textDark,
+            marginBottom: 2,
+        },
+        boatSubtitle: {
+            ...theme.textStyles.bodySmall,
+            color: theme.colors.textLight,
             marginBottom: 4,
         },
         boatPrice: {
-            ...theme.textStyles.bodyMedium,
+            ...theme.textStyles.bodySmall,
             color: theme.colors.textLight,
         },
         editButton: {
@@ -214,16 +178,7 @@ export default function Dashboard() {
     }
 
     return (
-        <View style={styles.container}>
-            {/* ETH Price Section */}
-            <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>Ethereum (ETH)</Text>
-                <Text style={styles.priceValue}>
-                    {ethPrice ? `$${ethPrice.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}` : 'Chargement...'}
-                </Text>
-                <Text style={styles.priceSubtitle}>Prix actuel en USD</Text>
-            </View>
-
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             {/* My Boats Section */}
             <View style={styles.myBoatsContainer}>
                 <View style={styles.sectionHeader}>
@@ -284,6 +239,6 @@ export default function Dashboard() {
                     </View>
                 )}
             </View>
-        </View>
+        </ScrollView>
     );
 }

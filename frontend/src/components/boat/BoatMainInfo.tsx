@@ -1,22 +1,98 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   Text,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
 import ChatIcon from '@/assets/images/ChatIcon.svg';
 import type { BoatSpecification } from '@/lib/boat.types';
+import PurchaseOfferDialog from '@/components/chat/PurchaseOfferDialog';
+import { ChatAPI } from '@/lib/chat.api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BoatMainInfoProps {
   specification: BoatSpecification;
+  boatId?: string;
+  ownerId?: string;
 }
 
-export default function BoatMainInfo({ specification }: BoatMainInfoProps) {
+export default function BoatMainInfo({ specification, boatId, ownerId }: BoatMainInfoProps) {
   const theme = useTheme();
+  const router = useRouter();
+  const { address } = useAuth();
+  const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+
+  const isOwner = address && ownerId && address.toLowerCase() === ownerId.toLowerCase();
+  const canMakeOffer = specification.for_sale && !isOwner;
+
+  const handlePurchaseOffer = async (offer: { priceInEth: number; message: string }) => {
+    if (!boatId || !ownerId || !address) {
+      Alert.alert('Erreur', 'Informations manquantes pour créer la conversation');
+      return;
+    }
+
+    setIsSubmittingOffer(true);
+    
+    try {
+      // First, try to find existing conversation
+      let conversation = await ChatAPI.findConversationByBoat(boatId, ownerId);
+      
+      if (conversation) {
+        // Conversation exists, send offer as message
+        await ChatAPI.sendOfferMessage(conversation.id, offer);
+      } else {
+        // No existing conversation, create new one
+        conversation = await ChatAPI.createConversation({
+          participants: [ownerId],
+          boatId,
+          offer,
+        });
+      }
+
+      setShowOfferDialog(false);
+      
+      Alert.alert(
+        'Offre envoyée !',
+        'Votre offre a été envoyée au propriétaire. Vous pouvez suivre la discussion dans vos messages.',
+        [
+          {
+            text: 'Voir la conversation',
+            onPress: () => router.push(`/chat/chat?conversationId=${conversation.id}`),
+          },
+          { text: 'OK' },
+        ]
+      );
+    } catch (error) {
+      console.error('Error sending offer:', error);
+      Alert.alert('Erreur', 'Impossible d\'envoyer l\'offre. Veuillez réessayer.');
+    } finally {
+      setIsSubmittingOffer(false);
+    }
+  };
+
+  const handleBuyPress = () => {
+    if (!address) {
+      Alert.alert('Authentification requise', 'Vous devez être connecté pour faire une offre.');
+      return;
+    }
+
+    if (!canMakeOffer) {
+      if (isOwner) {
+        Alert.alert('Information', 'Vous ne pouvez pas acheter votre propre bateau.');
+      } else {
+        Alert.alert('Information', 'Ce bateau n\'est pas en vente.');
+      }
+      return;
+    }
+
+    setShowOfferDialog(true);
+  };
 
   const styles = StyleSheet.create({
     mainInfoContainer: {
@@ -158,8 +234,14 @@ export default function BoatMainInfo({ specification }: BoatMainInfoProps) {
           <Link style={styles.chatButton} asChild={true} href="/chat/chat">
             <ChatIcon color={theme.colors.textDark} />
           </Link>
-          <TouchableOpacity style={styles.buyButton}>
-            <Text style={styles.buyButtonText}>Acheter</Text>
+          <TouchableOpacity 
+            style={[styles.buyButton, !canMakeOffer && { opacity: 0.6 }]} 
+            onPress={handleBuyPress}
+            disabled={isSubmittingOffer}
+          >
+            <Text style={styles.buyButtonText}>
+              {isSubmittingOffer ? 'Envoi...' : 'Acheter'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -190,6 +272,20 @@ export default function BoatMainInfo({ specification }: BoatMainInfoProps) {
           </Text>
         </View>
       </View>
+
+      {/* Purchase Offer Dialog */}
+      <PurchaseOfferDialog
+        visible={showOfferDialog}
+        onClose={() => setShowOfferDialog(false)}
+        onSubmit={handlePurchaseOffer}
+        boat={{
+          id: boatId || '',
+          title: specification.title || 'Bateau sans nom',
+          price: specification.price,
+          image: undefined, // Could be passed from parent component if needed
+        }}
+        loading={isSubmittingOffer}
+      />
     </View>
   );
 }

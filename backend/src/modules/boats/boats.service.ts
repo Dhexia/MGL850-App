@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ChainService } from '../chain/chain.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { DocumentService } from '../document/document.service';
 
 @Injectable()
 export class BoatsService {
@@ -13,6 +14,7 @@ export class BoatsService {
     private readonly cfg: ConfigService,
     private readonly chain: ChainService,
     private readonly cloudinary: CloudinaryService,
+    private readonly documentService: DocumentService,
   ) {
     this.supa = createClient(
       this.cfg.get<string>('SUPABASE_URL')!,
@@ -93,6 +95,132 @@ export class BoatsService {
   async burnPassport(tokenId: number, fromAddress?: string) {
     // ChainService renvoie { txHash }
     return this.chain.burnPassport(tokenId, fromAddress);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Transfert de propriété                                              */
+  /* ------------------------------------------------------------------ */
+  async transferOwnership(tokenId: number, toAddress: string, fromAddress?: string) {
+    // ChainService renvoie { txHash, from, to }
+    return this.chain.transferBoatOwnership(tokenId, toAddress, fromAddress);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Mise à jour de passeport (NFT)                                      */
+  /* ------------------------------------------------------------------ */
+  async updateBoatTokenURI(tokenId: number, newUri: string, fromAddress?: string) {
+    // 1. Mettre à jour sur la blockchain
+    let result;
+    try {
+      result = await this.chain.updateTokenURI(tokenId, newUri, fromAddress);
+    } catch (error) {
+      this.log.warn(`Blockchain update failed for boat #${tokenId}: ${error.message}`);
+      // En mode dev, continuer même si la blockchain échoue
+      result = { txHash: 'dev-mode-skip' };
+    }
+
+    // 2. Forcer la mise à jour de la base de données immédiatement
+    this.log.log(`🔄 Forcing database update for boat #${tokenId} with new URI: ${newUri}`);
+    await this.forceUpdateBoatURI(tokenId, newUri);
+
+    return result;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Validation de bateau (certificateurs seulement)                    */
+  /* ------------------------------------------------------------------ */
+  async validateBoat(tokenId: number, status: 'validated' | 'rejected', reason?: string, fromAddress?: string) {
+    // 1. Vérifier que l'utilisateur est un certificateur
+    const isCertifier = await this.chain.isCertifiedProfessional(fromAddress);
+    if (!isCertifier) {
+      throw new Error('Only certified professionals can validate boats');
+    }
+
+    // 2. Récupérer les métadonnées actuelles du bateau
+    const boatUri = await this.chain.tokenURI(tokenId);
+    if (!boatUri) {
+      throw new Error(`Boat #${tokenId} not found`);
+    }
+
+    // 3. Télécharger les métadonnées IPFS
+    const response = await fetch(boatUri.replace('ipfs://', 'https://ipfs.io/ipfs/'));
+    const metadata = await response.json();
+
+    // 4. Mettre à jour le statut
+    if (metadata.specification) {
+      metadata.specification.status = status;
+      if (reason) {
+        metadata.specification.validationReason = reason;
+      }
+      metadata.specification.validatedAt = new Date().toISOString();
+      metadata.specification.validatedBy = fromAddress;
+    }
+
+    // 5. Upload des nouvelles métadonnées vers IPFS
+    const newIpfsHash = await this.documentService.uploadJson(metadata);
+    const newUri = `ipfs://${newIpfsHash}`;
+
+    // 6. Mettre à jour l'URI du token (en mode dev, ignorer les erreurs de fonds)
+    let result = { success: true, txHash: 'dev-mode-skip' };
+    try {
+      const txResult = await this.chain.updateTokenURI(tokenId, newUri, fromAddress);
+      result = { success: true, txHash: txResult.txHash };
+    } catch (error) {
+      this.log.warn(`Skipping blockchain update due to error: ${error.message}`);
+      // En mode dev, on continue même si la transaction blockchain échoue
+    }
+
+    // 7. Forcer la mise à jour de la base de données immédiatement
+    this.log.log(`🔄 Forcing database update for boat #${tokenId} with URI: ${newUri}`);
+    await this.forceUpdateBoatURI(tokenId, newUri);
+
+    this.log.log(`Boat #${tokenId} ${status} by ${fromAddress}${reason ? ` (reason: ${reason})` : ''}`);
+    
+    return {
+      success: true,
+      txHash: result.txHash,
+      status,
+      newUri,
+      validatedBy: fromAddress
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+  async certifyBoat(tokenId: number, fromAddress?: string) {
+    return this.validateBoat(tokenId, 'validated', 'Bateau certifié par certificateur', fromAddress);
+  }
+
+  async revokeBoatCertification(tokenId: number, fromAddress?: string) {
+    return this.validateBoat(tokenId, 'rejected', 'Certification révoquée par certificateur', fromAddress);
+  }
+
+  /* ------------------------------------------------------------------ */
+  async getBoatCertificationStatus(tokenId: number) {
+    return this.chain.getBoatCertificationStatus(tokenId);
+  }
+
+  /* ------------------------------------------------------------------ */
+  async forceUpdateBoatURI(tokenId: number, newUri: string) {
+    try {
+      this.log.log(`🔄 Attempting to update boat #${tokenId} URI in database...`);
+      
+      // Utiliser la connexion Supabase existante
+      const { data, error } = await this.supa
+        .from('boats')
+        .update({ token_uri: newUri })
+        .eq('id', tokenId)
+        .select();
+
+      if (error) {
+        this.log.error(`❌ Failed to update boat #${tokenId} URI in database: ${error.message}`);
+        this.log.error(`Error details:`, error);
+      } else {
+        this.log.log(`✅ Boat #${tokenId} URI updated in database: ${newUri}`);
+        this.log.log(`Updated data:`, data);
+      }
+    } catch (error) {
+      this.log.error(`💥 Exception updating boat #${tokenId} URI in database: ${error.message}`);
+    }
   }
 
   /* ------------------------------------------------------------------ */

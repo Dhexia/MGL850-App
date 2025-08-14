@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ChainService } from '../chain/chain.service';
 import { EventKind, Status } from '../../shared/dto';
-import type { BoatEvents } from '../../abi/typechain-types/contracts/BoatEvents';
+import type { BoatEvents } from '../../abi/contracts/BoatEvents';
 
 type EventData = BoatEvents.EventDataStructOutput;
 

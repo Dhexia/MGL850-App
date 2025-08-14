@@ -13,7 +13,7 @@ export async function uploadBoatDataToIPFS(boatData: BoatIPFSData): Promise<{ ip
   return await apiFetch('/documents/upload-json', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(boatData),
+    body: JSON.stringify({ boatData }),
   }) as { ipfsHash: string };
 }
 
@@ -25,14 +25,26 @@ export async function mintPassport(to: string, uri: string) {
   });
 }
 
+export async function updateBoatURI(boatId: number, newUri: string) {
+  return await apiFetch(`/boats/${boatId}/update-uri`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tokenId: boatId, newUri }),
+  });
+}
+
 export async function uploadImages(images: Array<{ uri: string; name: string }>): Promise<{ images: Array<{ url: string; public_id: string }> }> {
   const formData = new FormData();
   
   images.forEach((image, index) => {
+    // Generate a short, safe filename
+    const timestamp = Date.now();
+    const shortName = `boat_${timestamp}_${index}.jpg`;
+    
     formData.append('images', {
       uri: image.uri,
       type: 'image/jpeg',
-      name: image.name || `image_${index}.jpg`,
+      name: shortName,
     } as any);
   });
 
@@ -43,4 +55,20 @@ export async function uploadImages(images: Array<{ uri: string; name: string }>)
       'Content-Type': 'multipart/form-data',
     },
   }) as { images: Array<{ url: string; public_id: string }> };
+}
+
+export async function certifyBoat(boatId: number): Promise<{ success: boolean; txHash?: string }> {
+  return await apiFetch(`/boats/${boatId}/certify`, {
+    method: 'POST',
+  }) as { success: boolean; txHash?: string };
+}
+
+export async function revokeBoatCertification(boatId: number): Promise<{ success: boolean; txHash?: string }> {
+  return await apiFetch(`/boats/${boatId}/revoke`, {
+    method: 'POST',
+  }) as { success: boolean; txHash?: string };
+}
+
+export async function getBoatCertificationStatus(boatId: number): Promise<{ status: 'validated' | 'pending' | 'rejected' }> {
+  return await apiFetch(`/boats/${boatId}/status`) as { status: 'validated' | 'pending' | 'rejected' };
 }

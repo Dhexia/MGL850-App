@@ -54,6 +54,19 @@ contract BoatPassport is ERC721URIStorage, AccessControl {
     }
 
     /**
+     * @notice Met à jour l'URI des métadonnées d'un passeport.
+     * @param tokenId L'identifiant unique du passeport.
+     * @param uri La nouvelle URI des métadonnées.
+     * @dev    Seuls les comptes avec le rôle DEFAULT_ADMIN_ROLE peuvent appeler cette fonction.
+     */
+    function setTokenURI(uint256 tokenId, string calldata uri)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _setTokenURI(tokenId, uri);
+    }
+
+    /**
      * @notice Indique si l'interface spécifiée est supportée.
      * @param interfaceId L'identifiant de l'interface à vérifier.
      * @return true si l'interface est supportée, false sinon.

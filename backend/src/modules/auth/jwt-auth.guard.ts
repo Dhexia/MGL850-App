@@ -20,10 +20,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
     if (isPublic) return true;
 
-    // Comportement existant: toutes les requêtes non-POST passent
-    if (req.method !== 'POST') return true;
-
-    // POST protégés par JWT
+    // Toutes les routes protégées nécessitent JWT
     return super.canActivate(context);
   }
 }

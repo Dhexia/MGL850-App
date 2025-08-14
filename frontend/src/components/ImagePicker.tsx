@@ -141,15 +141,13 @@ export default function ImagePickerComponent({
     if (wrapMode) return imagesDisplay(selectedImages);
     return (
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        imagesDisplay(selectedImages);
+        {imagesDisplay(selectedImages)}
       </ScrollView>
     );
   };
 
   return (
     <View>
-      <Text style={styles.title}>Photos du bateau</Text>
-
       {selectedImages.length < maxImages && (
         <Pressable style={styles.addButton} onPress={pickImages}>
           <Text style={styles.addButtonText}>

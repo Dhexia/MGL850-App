@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DocumentModule } from './modules/document/document.module';
 import { IndexerModule } from './modules/indexer/indexer.module';
 import { HealthModule } from './health/health.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HealthModule } from './health/health.module';
     DocumentModule,
     IndexerModule,
     HealthModule,
+    ChatModule,
   ],
   controllers: [],
 })

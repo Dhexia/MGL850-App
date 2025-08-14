@@ -70,16 +70,9 @@ const PageLayout = ({title, newNotification}: PageLayoutProps) => {
     return (
         <View style={styles.container}>
             <View style={styles.top}>
-                <TouchableOpacity
-                    style={[styles.button]}
-                    onPress={() => navigation.openDrawer()}
-                >
-                    <View style={{position: "relative"}}>
-                        <Feather name="bell" size={24} color={theme.colors.textDark}/>
-                        {newNotification &&
-                            <View style={styles.notificationDot}/>}
-                    </View>
-                </TouchableOpacity>
+                <View style={[styles.button, { opacity: 0 }]}>
+                    <Feather name="bell" size={24} color="transparent"/>
+                </View>
 
                 <View>
                     {Platform.OS !== "web" &&

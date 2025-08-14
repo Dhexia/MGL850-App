@@ -52,7 +52,10 @@ export async function fetchBoatsFromBackend(): Promise<UIBoat[]> {
 
         const uiBoat: UIBoat = {
           id: b.id,
-          specification: boatData.specification,
+          specification: {
+            ...boatData.specification,
+            owner_id: b.owner, // Add owner from blockchain data
+          },
           images: boatData.images || [],
           certificates: boatData.certificates || [],
           events: allEvents,
@@ -77,7 +80,10 @@ export async function fetchBoatsFromBackend(): Promise<UIBoat[]> {
 
         const uiBoat: UIBoat = {
           id: b.id,
-          specification: ipfsData.specification,
+          specification: {
+            ...ipfsData.specification,
+            owner_id: b.owner, // Add owner from blockchain data
+          },
           images: ipfsData.images || [],
           certificates: ipfsData.certificates || [],
           events: allEvents,
@@ -92,7 +98,10 @@ export async function fetchBoatsFromBackend(): Promise<UIBoat[]> {
 
       const fallbackBoat: UIBoat = {
         id: b.id,
-        specification: spec,
+        specification: {
+          ...spec,
+          owner_id: b.owner, // Add owner from blockchain data
+        },
         images: imageHttp ? [{ uri: imageHttp }] : [],
         certificates: [],
         events: [],

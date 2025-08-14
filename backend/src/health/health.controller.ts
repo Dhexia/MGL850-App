@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Delete } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
+import { Public } from '../modules/auth/public.decorator';
 
 @Controller('health')
+@Public()
 export class HealthController {
   constructor(private readonly configService: ConfigService) {}
 
@@ -184,6 +186,173 @@ export class HealthController {
       return {
         status: 'error',
         message: 'Failed to reset cursor',
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('chat-messages')
+  async deleteAllChatMessages() {
+    const supa = createClient(
+      this.configService.get('SUPABASE_URL')!,
+      this.configService.get('SUPABASE_SERVICE_KEY')!,
+    );
+
+    try {
+      // Get count of messages first
+      const { count: messageCount } = await supa
+        .from('messages')
+        .select('*', { count: 'exact', head: true });
+
+      // Delete all messages
+      const { error: messagesError } = await supa
+        .from('messages')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (messagesError) {
+        throw messagesError;
+      }
+
+      return {
+        status: 'success',
+        message: `Deleted ${messageCount || 0} chat messages`,
+        deletedCount: messageCount || 0,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Failed to delete chat messages',
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('chat-conversations')
+  async deleteAllChatConversations() {
+    const supa = createClient(
+      this.configService.get('SUPABASE_URL')!,
+      this.configService.get('SUPABASE_SERVICE_KEY')!,
+    );
+
+    try {
+      // Get count of conversations first
+      const { count: conversationCount } = await supa
+        .from('conversations')
+        .select('*', { count: 'exact', head: true });
+
+      // Delete all conversations
+      const { error: conversationsError } = await supa
+        .from('conversations')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (conversationsError) {
+        throw conversationsError;
+      }
+
+      return {
+        status: 'success',
+        message: `Deleted ${conversationCount || 0} chat conversations`,
+        deletedCount: conversationCount || 0,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Failed to delete chat conversations',
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('chat-all')
+  async deleteAllChatData() {
+    const supa = createClient(
+      this.configService.get('SUPABASE_URL')!,
+      this.configService.get('SUPABASE_SERVICE_KEY')!,
+    );
+
+    try {
+      // Get counts first
+      const { count: messageCount } = await supa
+        .from('messages')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: conversationCount } = await supa
+        .from('conversations')
+        .select('*', { count: 'exact', head: true });
+
+      // Delete messages first (foreign key constraint)
+      const { error: messagesError } = await supa
+        .from('messages')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (messagesError) {
+        throw messagesError;
+      }
+
+      // Then delete conversations
+      const { error: conversationsError } = await supa
+        .from('conversations')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (conversationsError) {
+        throw conversationsError;
+      }
+
+      return {
+        status: 'success',
+        message: `Deleted all chat data: ${messageCount || 0} messages and ${conversationCount || 0} conversations`,
+        deletedMessages: messageCount || 0,
+        deletedConversations: conversationCount || 0,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Failed to delete all chat data',
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('chat-stats')
+  async getChatStats() {
+    const supa = createClient(
+      this.configService.get('SUPABASE_URL')!,
+      this.configService.get('SUPABASE_SERVICE_KEY')!,
+    );
+
+    try {
+      // Get message count
+      const { count: messageCount } = await supa
+        .from('messages')
+        .select('*', { count: 'exact', head: true });
+
+      // Get conversation count
+      const { count: conversationCount } = await supa
+        .from('conversations')
+        .select('*', { count: 'exact', head: true });
+
+      // Get conversations with offers
+      const { count: offerCount } = await supa
+        .from('conversations')
+        .select('*', { count: 'exact', head: true })
+        .not('offer_price_eth', 'is', null);
+
+      return {
+        status: 'success',
+        stats: {
+          messages: messageCount || 0,
+          conversations: conversationCount || 0,
+          conversationsWithOffers: offerCount || 0,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Failed to get chat stats',
         error: error.message,
       };
     }

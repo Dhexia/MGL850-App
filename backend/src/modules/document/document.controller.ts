@@ -39,7 +39,7 @@ export class DocumentController {
   }
 
   /**
-   * Upload JSON metadata to IPFS (for boat NFT creation)
+   * Upload JSON metadata to IPFS (for boat NFT creation and updates)
    */
   @Post('upload-json')
   async uploadJson(@Body() body: { boatData: any }) {
@@ -47,6 +47,16 @@ export class DocumentController {
     const boatData = body.boatData;
     if (!boatData) {
       throw new Error('Missing boatData in request body');
+    }
+
+    // Force status to 'pending' for all boats (creation AND modification)
+    // This ensures any change to boat data requires re-validation
+    if (boatData.specification) {
+      boatData.specification.status = 'pending';
+      // Clear previous validation data when boat is modified
+      delete boatData.specification.validationReason;
+      delete boatData.specification.validatedAt;
+      delete boatData.specification.validatedBy;
     }
 
     const ipfsHash = await this.docs.uploadJson(boatData);

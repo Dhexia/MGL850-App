@@ -5,7 +5,7 @@ import Dashboard from "@/app/(tabs)/dashboard";
 import Boat from "@/app/(tabs)/boat";
 import Discuss from "@/app/(tabs)/discuss";
 import {TabBar} from "@/components/TabBar";
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useRef, useEffect} from 'react';
 import {Drawer as RightDrawer} from 'react-native-drawer-layout';
 import {
     Dimensions,
@@ -13,7 +13,10 @@ import {
     Text,
     StyleSheet,
     Platform,
-    Image
+    Image,
+    TouchableOpacity,
+    Alert,
+    Animated
 } from 'react-native';
 import RightDrawerContext from '@/contexts/RightDrawerContext';
 import PageLayout from '@/components/PageLayout';
@@ -23,13 +26,15 @@ import BoatChainMainIcon
     from "@/assets/images/boatchainIcons/BoatChainMainIcon.svg";
 import SettingsIcon from "@/assets/images/boatchainIcons/SettingsIcon.svg";
 import RessourcesIcon from "@/assets/images/boatchainIcons/RessourcesIcon.svg";
-import {Link} from "expo-router";
+import { Feather } from '@expo/vector-icons';
+import {Link, useRouter} from "expo-router";
 import {useAuth} from "@/contexts/AuthContext";
 
 const Tab = createMaterialTopTabNavigator();
 
 export default function Layout() {
-    const { address, userRole, isVerified } = useAuth();
+    const { address, userRole, isVerified, logout } = useAuth();
+    const router = useRouter();
 
     // Format address for display (show first 6 and last 4 characters)
     const formatAddress = (addr: string | undefined) => {
@@ -49,6 +54,17 @@ export default function Layout() {
     }
 
     const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
+    const [userMenuExpanded, setUserMenuExpanded] = useState(false);
+    const slideAnim = useRef(new Animated.Value(0)).current;
+    
+    useEffect(() => {
+        Animated.timing(slideAnim, {
+            toValue: userMenuExpanded ? 1 : 0,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
+    }, [userMenuExpanded, slideAnim]);
+    
     const contextValue = useMemo(() => ({
         openRightDrawer: () => setRightDrawerOpen(true),
         closeRightDrawer: () => setRightDrawerOpen(false),
@@ -157,6 +173,28 @@ export default function Layout() {
             height: 40,
             borderRadius: 8,
             marginRight: 10
+        },
+        userMenuExpanded: {
+            backgroundColor: theme.colors.backgroundLight,
+            marginTop: 10,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: theme.colors.neutral,
+            overflow: 'hidden',
+        },
+        logoutButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            borderRadius: 8,
+        },
+        logoutText: {
+            color: theme.colors.destructive || '#ff4444',
+            ...theme.textStyles.bodyMedium,
+            marginLeft: 8,
+        },
+        expandIcon: {
+            marginLeft: 'auto',
         }
     })
 
@@ -169,37 +207,79 @@ export default function Layout() {
             drawerStyle={styles.drawerRight}
             renderDrawerContent={() => (
                 <View style={styles.drawer}>
-                    <View style={rightDrawerStyle.userContainer}>
-                        <Image
-                            source={require('@/assets/images/userIcon.png')}
-                            resizeMode="contain"
-                            style={rightDrawerStyle.userIcon}
-                        />
-                        <View style={rightDrawerStyle.userNameContainer}>
-                            <Text style={rightDrawerStyle.userName}>
-                                {userInfo.name}
-                            </Text>
-                            <Text style={rightDrawerStyle.hash}>
-                                {userInfo.hash}
-                            </Text>
-                        </View>
-                    </View>
                     <View>
-                        <Link
-                            href={"/boats/new-boat"}
-                            style={rightDrawerStyle.items}
+                        <TouchableOpacity 
+                            style={rightDrawerStyle.userContainer}
+                            onPress={() => setUserMenuExpanded(!userMenuExpanded)}
                         >
-                            <View style={rightDrawerStyle.items}>
-                                <View style={rightDrawerStyle.itemIconView}>
-                                    <BoatChainMainIcon
-                                        style={rightDrawerStyle.itemIcon}
-                                    />
-                                </View>
-                                <Text style={rightDrawerStyle.itemTitle}>
-                                    Mes Bateaux
+                            <Image
+                                source={require('@/assets/images/userIcon.png')}
+                                resizeMode="contain"
+                                style={rightDrawerStyle.userIcon}
+                            />
+                            <View style={rightDrawerStyle.userNameContainer}>
+                                <Text style={rightDrawerStyle.userName}>
+                                    {userInfo.name}
+                                </Text>
+                                <Text style={rightDrawerStyle.hash}>
+                                    {userInfo.hash}
                                 </Text>
                             </View>
-                        </Link>
+                            <View style={rightDrawerStyle.expandIcon}>
+                                <Feather 
+                                    name={userMenuExpanded ? "chevron-up" : "chevron-down"} 
+                                    size={20} 
+                                    color={theme.colors.textLight} 
+                                />
+                            </View>
+                        </TouchableOpacity>
+                        
+                        <Animated.View
+                            style={[
+                                rightDrawerStyle.userMenuExpanded,
+                                {
+                                    maxHeight: slideAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, 60]
+                                    }),
+                                    opacity: slideAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, 1]
+                                    }),
+                                }
+                            ]}
+                        >
+                            <TouchableOpacity 
+                                style={rightDrawerStyle.logoutButton}
+                                onPress={() => {
+                                    Alert.alert(
+                                        "Déconnexion",
+                                        "Vous êtes sur le point de vous déconnecter. Êtes-vous sûr ?",
+                                        [
+                                            {
+                                                text: "Annuler",
+                                                style: "cancel"
+                                            },
+                                            {
+                                                text: "Se déconnecter",
+                                                style: "destructive",
+                                                onPress: async () => {
+                                                    await logout();
+                                                    router.replace('/(auth)/mode');
+                                                }
+                                            }
+                                        ]
+                                    );
+                                }}
+                            >
+                                <Feather name="log-out" size={18} color={theme.colors.destructive || '#ff4444'} />
+                                <Text style={rightDrawerStyle.logoutText}>
+                                    Se déconnecter
+                                </Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                    <View>
                         <Link
                             href={"/ressources/useful_ressources"}
                              style={rightDrawerStyle.items}

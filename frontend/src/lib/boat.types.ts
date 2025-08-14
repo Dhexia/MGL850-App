@@ -21,6 +21,7 @@ export interface BoatSpecification {
   description: string;
   summary: string;
   status: 'validated' | 'pending' | 'rejected' | 'suspicious';
+  owner_id?: string; // Owner address from blockchain
 }
 
 export interface BoatAttachment {
