@@ -5,7 +5,6 @@ import { useTheme } from "@/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { BoatChainValidated } from "@/components/BoatChainValidated";
 import { createCertifierActionStyles } from "@/styles/CertifierActions.style";
-import * as WebBrowser from "expo-web-browser";
 import PdfViewer from "../PdfViewer";
 
 interface CertificateData {

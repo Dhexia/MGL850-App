@@ -1,16 +1,11 @@
-import React from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-} from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
-import { useTheme } from '@/theme';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'expo-router';
-import PenIcon from '@/assets/images/PenIcon.svg';
+import React from "react";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { AntDesign } from "@expo/vector-icons";
+import { useTheme } from "@/theme";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, router } from "expo-router";
+import PenIcon from "@/assets/images/PenIcon.svg";
 
 interface BoatHeaderProps {
   boatId?: string;
@@ -22,29 +17,30 @@ interface BoatHeaderProps {
   events?: any[];
 }
 
-export default function BoatHeader({ 
-  boatId, 
-  ownerId, 
-  isForSale = false, 
+export default function BoatHeader({
+  boatId,
+  ownerId,
+  isForSale = false,
   specification,
   images,
   certificates,
-  events
+  events,
 }: BoatHeaderProps) {
   const theme = useTheme();
   const navigation = useNavigation();
   const { address, userRole } = useAuth();
-  
+
   // Vérifier si l'utilisateur connecté est propriétaire du bateau
-  const isOwner = address && ownerId && address.toLowerCase() === ownerId.toLowerCase();
-  const isCertifier = userRole === 'certifier';
-  const isStandardUser = userRole === 'standard_user';
+  const isOwner =
+    address && ownerId && address.toLowerCase() === ownerId.toLowerCase();
+  const isCertifier = userRole === "certifier";
+  const isStandardUser = userRole === "standard_user";
 
   const styles = StyleSheet.create({
     topContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       margin: 15,
     },
     backButton: {
@@ -54,11 +50,11 @@ export default function BoatHeader({
       backgroundColor: theme.colors.surfaceLight,
       height: 40,
       width: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     topRightContainer: {
-      flexDirection: 'row',
+      flexDirection: "row",
     },
     penButton: {
       borderRadius: 30,
@@ -67,8 +63,8 @@ export default function BoatHeader({
       backgroundColor: theme.colors.surfaceLight,
       height: 40,
       width: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     buyButton: {
       backgroundColor: theme.colors.primary,
@@ -80,7 +76,7 @@ export default function BoatHeader({
     buyButtonText: {
       ...theme.textStyles.titleSmall,
       color: theme.colors.background,
-      fontWeight: '600',
+      fontWeight: "600",
     },
   });
 
@@ -94,15 +90,15 @@ export default function BoatHeader({
           <AntDesign name="arrowleft" size={25} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.topRightContainer}>
         {/* Bouton Modifier : Seulement pour propriétaire */}
         {isOwner && isStandardUser && (
           <Link
             href={{
-              pathname: '/boats/edit-boat',
+              pathname: "/boats/edit-boat",
               params: {
-                boatId: boatId || '',
+                boatId: boatId || "",
                 ownerId: ownerId,
                 specification: JSON.stringify(specification || {}),
                 images: JSON.stringify(images || []),
@@ -117,10 +113,21 @@ export default function BoatHeader({
             </TouchableOpacity>
           </Link>
         )}
-        
+
         {/* Bouton Acheter : Pour utilisateurs standards seulement, pas propriétaires, pas certificateurs */}
         {isForSale && isStandardUser && !isOwner && (
-          <TouchableOpacity style={styles.buyButton}>
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={() => {
+              router.push({
+                pathname: "/chat/chat",
+                params: {
+                  boatId,
+                  showOfferModal: "true",
+                },
+              });
+            }}
+          >
             <Text style={styles.buyButtonText}>Acheter</Text>
           </TouchableOpacity>
         )}

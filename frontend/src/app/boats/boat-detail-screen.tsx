@@ -64,7 +64,7 @@ export default function BoatDetailScreen() {
       <View style={styles.contentContainer}>
         <BoatImageSection images={images} boatType={specification?.boat_type} />
 
-        <BoatMainInfo specification={specification} />
+        <BoatMainInfo specification={specification}/>
 
         <BoatDescription description={specification.description} />
 
